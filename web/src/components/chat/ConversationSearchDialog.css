@@ -1,0 +1,37 @@
+.conversation-search {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+.conversation-search-results {
+  height: clamp(260px, 52vh, 420px);
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 3px;
+}
+.conversation-search-results > button {
+  min-width: 0;
+  min-height: 58px;
+  padding: 9px 10px;
+  display: grid;
+  gap: 3px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: transparent;
+  text-align: left;
+}
+.conversation-search-results > button:hover {
+  background: var(--bg-hover);
+}
+.conversation-search-results strong,
+.conversation-search-results span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conversation-search-results span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}

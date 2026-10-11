@@ -1,0 +1,1695 @@
+{
+  "version": 1,
+  "title": "MalouChat 技术架构",
+  "description": "从用户能感知的 AI 工作流，到前端、后端、数据存储和外部 AI 服务的实现链路，完整展示 MalouChat 的产品能力与技术架构。",
+  "layers": [
+    {
+      "id": "product",
+      "label": "业务 / 产品层",
+      "description": "用户能直接感知的功能闭环：登录、会话管理、AI 对话、附件理解、长期记忆、知识库协作、个性化设置和管理员模型治理。"
+    },
+    {
+      "id": "technical",
+      "label": "技术实现层",
+      "description": "支撑产品能力的工程实现：前端应用、后端 API、运行时模型管理、AI 编排、RAG、数据库、对象存储、外部模型和部署。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "product",
+      "label": "用户感知能力",
+      "color": "#0f766e"
+    },
+    {
+      "id": "frontend",
+      "label": "前端",
+      "color": "#2563eb"
+    },
+    {
+      "id": "backend",
+      "label": "后端",
+      "color": "#16a34a"
+    },
+    {
+      "id": "ai",
+      "label": "AI / RAG",
+      "color": "#7c3aed"
+    },
+    {
+      "id": "external",
+      "label": "外部系统",
+      "color": "#475569"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "product-entry",
+      "label": "登录 / 注册入口",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "用户可注册、登录或以可恢复访客身份进入系统，并恢复自己的 AI 工作台状态。",
+      "details": "登录和注册共用一个认证入口页面；登录页同时提供访客登录，访客与正式用户共用相同 Token 有效期，并使用数据库递增展示名和浏览器高熵恢复密钥在会话过期后恢复原账号。前端路由守卫负责未登录重定向，认证状态由 Zustand、本地 token 和访客身份共同恢复。",
+      "files": [
+        "web/src/views/LoginView.tsx",
+        "web/src/router/index.tsx"
+      ],
+      "tags": [
+        "入口",
+        "鉴权",
+        "访客登录"
+      ]
+    },
+    {
+      "id": "product-chat",
+      "label": "AI 对话工作台",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "用户围绕一个会话进行多轮提问，并实时接收 AI 流式回答。",
+      "details": "聊天工作台是核心使用场景：左侧管理会话、知识库和记忆入口，中间展示消息和深度思考，底部输入区承载文本、附件、知识库引用、语音输入和发送控制。",
+      "files": [
+        "web/src/views/ChatView.tsx",
+        "web/src/components/chat/ChatMainPanel.tsx",
+        "web/src/components/chat/ChatSidebar.tsx",
+        "server/src/modules/messages/message.service.ts"
+      ],
+      "tags": [
+        "对话",
+        "流式",
+        "工作台"
+      ]
+    },
+    {
+      "id": "product-conversation-management",
+      "label": "会话管理",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "用户可以按项目组织会话，也可以新建、置顶、重命名、删除和切换历史会话。",
+      "details": "侧栏会话管理分为项目列表和普通对话列表。项目可配置 icon、颜色、标题和长期提示词，项目下的会话会自动携带项目提示词进入 LLM system prompt；一个项目可包含多个会话，一个会话最多属于一个项目。用户可通过拖拽或菜单 dialog 将普通会话加入项目、在项目间移动或移出到普通对话列表。",
+      "files": [
+        "web/src/components/chat/ChatSidebar.tsx",
+        "web/src/components/chat/ChatSidebar.tsx",
+        "web/src/components/chat/ChatSidebar.tsx",
+        "web/src/components/chat/ProjectDialog.tsx",
+        "web/src/stores/chat.ts",
+        "web/src/stores/project.ts",
+        "server/src/modules/projects/project.service.ts",
+        "server/src/modules/conversations/conversation.service.ts"
+      ],
+      "tags": [
+        "会话",
+        "项目",
+        "拖拽移动"
+      ]
+    },
+    {
+      "id": "product-message-operations",
+      "label": "消息操作",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "用户可以编辑、复制、删除、重新生成消息，并查看深度思考内容。",
+      "details": "消息列表支持用户对单条消息进行复制、编辑、删除和重新生成；AI 回答流式输出，深度思考内容以折叠块展示，断流后可恢复生成状态。",
+      "files": [
+        "web/src/components/chat/MessageList.tsx",
+        "web/src/stores/chat.ts",
+        "server/src/modules/messages/message.service.ts"
+      ],
+      "tags": [
+        "消息",
+        "编辑",
+        "重新生成"
+      ]
+    },
+    {
+      "id": "product-ai-capabilities",
+      "label": "AI 多能力助手",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "AI 不只聊天，还能联网搜索、生成图片、理解位置和使用上下文工具。",
+      "details": "当用户询问实时信息时可触发联网搜索；要求画图时可生成图片；询问天气、周边、本地活动时可通过浏览器定位和高德地图理解位置；同时可以结合附件、知识库、长期记忆和回答风格生成回答。",
+      "files": [
+        "server/src/lib/ai.ts",
+        "server/src/lib/tools/webSearch.ts",
+        "server/src/lib/tools/drawImage.ts",
+        "server/src/lib/tools/userLocation.ts",
+        "web/src/utils/client-tools.ts"
+      ],
+      "tags": [
+        "联网搜索",
+        "图片生成",
+        "位置感知"
+      ]
+    },
+    {
+      "id": "product-files",
+      "label": "附件理解",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "用户上传文件或图片，AI 在本轮对话里理解附件内容。",
+      "details": "支持文本、PDF、DOCX、XLSX、图片等附件；小文本直接进入上下文，大文本进入语义检索，图片会做多模态分析。",
+      "files": [
+        "web/src/components/chat/MessageComposer.tsx",
+        "server/src/modules/files/file.service.ts",
+        "server/src/lib/vision.ts"
+      ],
+      "tags": [
+        "附件",
+        "图片理解",
+        "文件问答"
+      ]
+    },
+    {
+      "id": "product-memory",
+      "label": "长期记忆管理",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "用户管理个人记忆，AI 也能从对话中自动沉淀信息。",
+      "details": "记忆模块让 AI 不只回答当前问题，也能长期理解用户画像、偏好、事实和摘要；用户可以手动管理记忆，后端也会在对话结束后自动判断是否值得记住。",
+      "files": [
+        "web/src/views/MemoryView.tsx",
+        "web/src/stores/memory.ts",
+        "server/src/modules/memories/memory.service.ts",
+        "server/src/lib/memory-graph.ts"
+      ],
+      "tags": [
+        "记忆",
+        "个性化",
+        "LangGraph"
+      ]
+    },
+    {
+      "id": "product-preferences",
+      "label": "个性化设置",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "用户可以调整主题、默认模型和回答风格。",
+      "details": "设置弹窗集中承载主题切换、模型偏好、回答语调风格和退出登录；模型和语调会影响后续 AI 回答，但不会改变会话历史。",
+      "files": [
+        "web/src/components/chat/ChatSettingsDialog.tsx",
+        "web/src/stores/preferences.ts",
+        "server/src/modules/model-preferences/model-preference.service.ts",
+        "server/src/modules/user-preferences/user-preference.service.ts"
+      ],
+      "tags": [
+        "模型",
+        "语调",
+        "主题"
+      ]
+    },
+    {
+      "id": "product-model-admin",
+      "label": "后台模型管理",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "管理员统一维护用户可选模型和各项 AI 专用能力，不再依赖代码中的写死配置。",
+      "details": "管理员通过 /admin 页面管理对话、向量、多模态、语音和文生图模型。对话模型支持多条配置、默认项、拖拽排序和一键切换全部用户；专用能力各保留一条当前配置，文生图同时管理默认尺寸、提示词扩展和水印。",
+      "files": [
+        "web/src/views/AdminView.tsx",
+        "web/src/api/admin-model.ts",
+        "server/src/modules/admin-models/admin-model.service.ts",
+        "server/src/lib/model-registry.ts",
+        "server/prisma/schema.prisma"
+      ],
+      "tags": [
+        "管理员",
+        "模型配置",
+        "运行时生效"
+      ]
+    },
+    {
+      "id": "product-knowledge-management",
+      "label": "知识库管理",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "用户独立管理知识库内容、附件、状态和可见性。",
+      "details": "知识库是独立页面，不依附某个会话；正式用户 owner 可以创建、上传 txt/docx、编辑内容、重新上传附件、删除知识库，并在私有/团队之间切换，可见处理状态和详情；访客点击新建时前端会友好提示注册或登录正式账号。",
+      "files": [
+        "web/src/views/KnowledgeBaseView.tsx",
+        "web/src/components/knowledge/KnowledgeBaseEditorModal.tsx",
+        "web/src/components/knowledge/KnowledgeBaseDetailModal.tsx",
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts",
+        "server/src/modules/knowledge-bases/knowledge-base-rag.service.ts"
+      ],
+      "tags": [
+        "上传",
+        "编辑",
+        "RAG"
+      ]
+    },
+    {
+      "id": "product-knowledge-collaboration",
+      "label": "知识库团队协作",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "团队知识库支持邀请、接受/拒绝、成员管理和退出。",
+      "details": "owner 可以邀请用户加入团队知识库、管理成员和移除成员；被邀请用户登录后处理邀请，同意后可引用，拒绝则不加入；成员只能退出和引用，不能更新或删除。",
+      "files": [
+        "web/src/views/KnowledgeBaseView.tsx",
+        "web/src/App.tsx",
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts",
+        "server/src/modules/users/user.service.ts"
+      ],
+      "tags": [
+        "邀请",
+        "成员",
+        "团队"
+      ]
+    },
+    {
+      "id": "product-knowledge-reference",
+      "label": "对话引用知识库",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "module",
+      "summary": "用户在对话里选择可访问的知识库，让回答引用专属资料。",
+      "details": "知识库管理完成后，可以在对话输入区绑定知识库；发送前会做权限和状态预检，若成员被移除或知识库改回私有，会给出友好提示并清空不可用引用。",
+      "files": [
+        "web/src/components/chat/MessageComposer.tsx",
+        "web/src/stores/chat.ts",
+        "server/src/modules/messages/message.service.ts",
+        "server/src/modules/conversations/conversation.service.ts"
+      ],
+      "tags": [
+        "引用",
+        "权限预检",
+        "知识问答"
+      ]
+    },
+    {
+      "id": "product-project-context",
+      "label": "项目化组织与项目提示词",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-conversation-management",
+      "summary": "按项目组织会话，并让项目内会话持续遵循项目指令。",
+      "details": "一个项目可包含多个会话，并配置图标、颜色、标题和长期提示词；项目提示词会进入该项目会话的模型上下文，使同一工作主题保持稳定要求。",
+      "files": [
+        "web/src/components/chat/ChatSidebar.tsx",
+        "web/src/components/chat/ProjectDialog.tsx",
+        "server/src/modules/projects/project.service.ts"
+      ],
+      "tags": [
+        "项目",
+        "上下文",
+        "提示词"
+      ]
+    },
+    {
+      "id": "product-conversation-movement",
+      "label": "拖拽归类与跨项目移动",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-conversation-management",
+      "summary": "通过拖拽或菜单在普通列表与不同项目之间整理会话。",
+      "details": "用户可以把普通会话拖入项目、在项目之间移动或移回普通对话列表；移动结果同步写入后端，移动到原位置等无变化场景不会产生请求。",
+      "files": [
+        "web/src/components/chat/ChatSidebar.tsx",
+        "web/src/components/chat/ChatSidebar.tsx",
+        "web/src/utils/project-dnd.ts",
+        "server/src/modules/conversations/conversation.service.ts"
+      ],
+      "tags": [
+        "拖拽",
+        "项目归类",
+        "状态同步"
+      ]
+    },
+    {
+      "id": "product-conversation-find",
+      "label": "置顶、搜索与快速定位",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-conversation-management",
+      "summary": "突出高频会话，并从不断增长的历史记录中快速找回目标。",
+      "details": "用户可以置顶重要会话、按关键词搜索历史会话，并从搜索结果直接定位到目标内容；重命名和删除等基础管理动作保留在会话菜单中。",
+      "files": [
+        "web/src/components/chat/ChatSidebar.tsx",
+        "web/src/components/chat/ConversationSearchDialog.tsx",
+        "server/src/modules/conversations/conversation.service.ts"
+      ],
+      "tags": [
+        "置顶",
+        "搜索",
+        "定位"
+      ]
+    },
+    {
+      "id": "product-message-regenerate",
+      "label": "编辑后重新生成",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-message-operations",
+      "summary": "修改历史提问后，从该位置重新生成后续回答。",
+      "details": "用户编辑历史消息时，系统会截断该消息之后的旧上下文，并基于修改后的问题重新生成回答，避免新旧分支内容混在同一会话中。",
+      "files": [
+        "web/src/components/chat/MessageList.tsx",
+        "web/src/stores/chat.ts",
+        "server/src/modules/messages/message.service.ts"
+      ],
+      "tags": [
+        "编辑",
+        "截断",
+        "重新生成"
+      ]
+    },
+    {
+      "id": "product-stream-recovery",
+      "label": "流式输出与断流恢复",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-message-operations",
+      "summary": "实时展示回答，并在连接中断后恢复生成状态和已有内容。",
+      "details": "AI 回答通过流式事件持续追加；连接意外中断时，前端可重新订阅生成任务，恢复已产生内容、深度思考状态和后续正文。",
+      "files": [
+        "web/src/api/chat.ts",
+        "web/src/stores/chat.ts",
+        "server/src/modules/messages/message.service.ts",
+        "server/src/utils/sse.ts"
+      ],
+      "tags": [
+        "流式",
+        "中断恢复",
+        "SSE"
+      ]
+    },
+    {
+      "id": "product-image-understanding",
+      "label": "图片多模态理解",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-files",
+      "summary": "结合用户本轮问题理解图片中的视觉内容和文字。",
+      "details": "图片上传后会生成通用视觉描述，发送消息时还可以结合用户本轮问题做针对性分析；分析失败时仍会明确告诉模型存在图片附件。",
+      "files": [
+        "web/src/components/chat/MessageComposer.tsx",
+        "server/src/lib/vision.ts",
+        "server/src/modules/messages/message.service.ts"
+      ],
+      "tags": [
+        "多模态",
+        "视觉理解",
+        "图片问答"
+      ]
+    },
+    {
+      "id": "product-large-file-qa",
+      "label": "大文件语义问答",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-files",
+      "summary": "根据文件规模选择直接理解或语义检索，定位相关内容回答。",
+      "details": "小文本直接进入当前对话上下文，大文件在后台完成分块和索引；提问时 AI 可检索相关片段，避免只读取文件开头。",
+      "files": [
+        "server/src/modules/files/rag.service.ts",
+        "server/src/lib/tools/semanticSearch.ts",
+        "server/src/lib/chunker.ts"
+      ],
+      "tags": [
+        "文件问答",
+        "语义检索",
+        "大文件"
+      ]
+    },
+    {
+      "id": "product-memory-extraction",
+      "label": "对话自动提取",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-memory",
+      "summary": "从对话中判断值得长期保留的用户信息并自动沉淀。",
+      "details": "每轮对话完成后，系统会判断内容是否值得记忆，并提取用户画像、偏好、事实和摘要；不值得长期保存的内容会被跳过。",
+      "files": [
+        "server/src/lib/memory-graph.ts",
+        "server/src/lib/ai.ts",
+        "server/src/modules/memories/memory.service.ts"
+      ],
+      "tags": [
+        "自动提取",
+        "长期记忆",
+        "LangGraph"
+      ]
+    },
+    {
+      "id": "product-memory-control",
+      "label": "用户可控管理",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-memory",
+      "summary": "用户可以检查和修正 AI 长期保留的个人信息。",
+      "details": "记忆管理页允许用户查看、创建、修改和删除长期记忆，使自动记忆具备透明、可修正和可撤回的控制边界。",
+      "files": [
+        "web/src/views/MemoryView.tsx",
+        "web/src/stores/memory.ts",
+        "server/src/modules/memories/memory.service.ts"
+      ],
+      "tags": [
+        "透明",
+        "可控",
+        "记忆管理"
+      ]
+    },
+    {
+      "id": "product-web-search",
+      "label": "联网搜索",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-ai-capabilities",
+      "summary": "面对实时信息问题时，由 AI 主动检索互联网内容。",
+      "details": "模型在需要最新事实、新闻或实时资料时调用联网搜索工具，再结合搜索结果生成回答，用户不需要手动切换独立搜索模式。",
+      "files": [
+        "server/src/lib/tools/webSearch.ts",
+        "server/src/lib/mcp.ts",
+        "server/src/lib/ai.ts"
+      ],
+      "tags": [
+        "实时信息",
+        "联网搜索",
+        "工具调用"
+      ]
+    },
+    {
+      "id": "product-image-generation",
+      "label": "图片生成",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-ai-capabilities",
+      "summary": "根据自然语言描述生成图片，并作为会话结果展示。",
+      "details": "当用户提出绘图需求时，模型调用图片生成工具；生成结果转存到对象存储后作为图片消息返回，并支持预览和下载。",
+      "files": [
+        "server/src/lib/tools/drawImage.ts",
+        "server/src/lib/ai.ts",
+        "web/src/components/chat/MessageList.tsx"
+      ],
+      "tags": [
+        "图片生成",
+        "会话结果",
+        "对象存储"
+      ]
+    },
+    {
+      "id": "product-location-awareness",
+      "label": "位置感知",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-ai-capabilities",
+      "summary": "在用户授权后理解当前位置，回答天气、周边和本地问题。",
+      "details": "AI 通过浏览器能力请求用户授权定位，再把经纬度转换为可读地区；位置只在当前工具调用中使用，不由前端根据关键词擅自触发。",
+      "files": [
+        "web/src/utils/client-tools.ts",
+        "server/src/lib/tools/userLocation.ts",
+        "server/src/lib/tool-context.ts"
+      ],
+      "tags": [
+        "用户授权",
+        "位置",
+        "浏览器能力"
+      ]
+    },
+    {
+      "id": "product-model-style",
+      "label": "模型与回答风格",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-preferences",
+      "summary": "持久化默认模型和语调偏好，形成稳定的个人回答体验。",
+      "details": "用户可以选择默认模型、回答风格和主题；模型与语调偏好会影响后续回答，但不会重写已有会话历史。",
+      "files": [
+        "web/src/components/chat/ChatSettingsDialog.tsx",
+        "server/src/modules/model-preferences/model-preference.service.ts",
+        "server/src/modules/user-preferences/user-preference.service.ts"
+      ],
+      "tags": [
+        "模型偏好",
+        "语调",
+        "个性化"
+      ]
+    },
+    {
+      "id": "product-chat-model-governance",
+      "label": "对话模型排序与全员切换",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-model-admin",
+      "summary": "控制用户可选模型的默认项和展示顺序，并能紧急统一切换全部用户。",
+      "details": "管理员可以添加多个对话模型、设置默认模型并拖拽排序；用户设置中的模型列表沿用同一顺序。模型到期或额度异常时，可把所有用户偏好一次性刷新到指定模型。",
+      "files": [
+        "web/src/views/AdminView.tsx",
+        "server/src/modules/admin-models/admin-model.service.ts",
+        "server/src/modules/model-preferences/model-preference.service.ts"
+      ],
+      "tags": [
+        "拖拽排序",
+        "默认模型",
+        "一键切换"
+      ]
+    },
+    {
+      "id": "product-specialized-model-governance",
+      "label": "专用模型统一配置",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-model-admin",
+      "summary": "分别配置向量、多模态、语音和文生图当前使用的单一模型。",
+      "details": "专用模型按能力拆分为向量检索、图片理解、语音转写和文生图四项，每项使用独立配置；语音转写按模型系列选择 OpenAI 兼容或 DashScope 原生 HTTP 接口；文生图额外保存尺寸、提示词智能扩展和水印参数。",
+      "files": [
+        "web/src/views/AdminView.tsx",
+        "server/src/lib/embeddings.ts",
+        "server/src/lib/vision.ts",
+        "server/src/lib/audio.ts",
+        "server/src/lib/tools/drawImage.ts"
+      ],
+      "tags": [
+        "Embedding",
+        "多模态",
+        "ASR",
+        "文生图"
+      ]
+    },
+    {
+      "id": "product-knowledge-stable-update",
+      "label": "原 ID 内容更新",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-knowledge-management",
+      "summary": "编辑内容或重新上传文件时保持知识库身份和已有引用不变。",
+      "details": "创建者可以修改标题、正文或重新上传附件；更新始终保留原知识库 ID，因此成员关系和已有会话引用不需要迁移。",
+      "files": [
+        "web/src/components/knowledge/KnowledgeBaseEditorModal.tsx",
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts"
+      ],
+      "tags": [
+        "编辑",
+        "重新上传",
+        "稳定 ID"
+      ]
+    },
+    {
+      "id": "product-knowledge-reindex",
+      "label": "自动重建索引",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-knowledge-management",
+      "summary": "内容变化后自动重新切分和索引，并展示处理状态。",
+      "details": "正文或附件更新后，知识库重新进入处理队列，完成文本切分和向量索引；页面通过完成、处理中和失败图标反馈当前状态。",
+      "files": [
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts",
+        "server/src/modules/knowledge-bases/knowledge-base-rag.service.ts",
+        "web/src/views/KnowledgeBaseView.tsx"
+      ],
+      "tags": [
+        "重建索引",
+        "处理状态",
+        "内容更新"
+      ]
+    },
+    {
+      "id": "product-knowledge-visibility",
+      "label": "私有 / 团队切换",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-knowledge-management",
+      "summary": "创建者控制知识资产仅自己使用或开放给受邀团队。",
+      "details": "知识库支持私有和团队两种可见性，切换前需要二次确认；团队转回私有时自动移除所有成员，并同步收回成员访问权。",
+      "files": [
+        "web/src/views/KnowledgeBaseView.tsx",
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts"
+      ],
+      "tags": [
+        "私有",
+        "团队",
+        "二次确认"
+      ]
+    },
+    {
+      "id": "product-invitation-lifecycle",
+      "label": "邀请处理闭环",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-knowledge-collaboration",
+      "summary": "从搜索用户、批量邀请到接受或拒绝形成完整协作流程。",
+      "details": "创建者可按用户名或邮箱搜索并多选邀请；被邀请人登录后看到邀请列表，接受后加入知识库，拒绝后邀请记录被清理。",
+      "files": [
+        "web/src/views/KnowledgeBaseView.tsx",
+        "web/src/App.tsx",
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts",
+        "server/src/modules/users/user.service.ts"
+      ],
+      "tags": [
+        "邀请",
+        "接受拒绝",
+        "用户搜索"
+      ]
+    },
+    {
+      "id": "product-knowledge-roles",
+      "label": "创建者 / 成员权限",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-knowledge-collaboration",
+      "summary": "创建者管理内容和团队，成员仅保留引用与退出能力。",
+      "details": "创建者可以更新、删除知识库并邀请或移除成员；普通成员不能修改内容和团队，只能在对话中引用知识库或主动退出。",
+      "files": [
+        "web/src/views/KnowledgeBaseView.tsx",
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts"
+      ],
+      "tags": [
+        "角色",
+        "权限边界",
+        "成员"
+      ]
+    },
+    {
+      "id": "product-membership-exit",
+      "label": "成员移除与退出",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-knowledge-collaboration",
+      "summary": "创建者可以移除成员，成员也可以主动结束共享关系。",
+      "details": "创建者踢出成员或成员主动退出后，团队成员关系立即删除；后端同步清理该成员会话中对该知识库的绑定。",
+      "files": [
+        "web/src/views/KnowledgeBaseView.tsx",
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts",
+        "server/src/modules/conversations/conversation.service.ts"
+      ],
+      "tags": [
+        "移除成员",
+        "退出团队",
+        "关系清理"
+      ]
+    },
+    {
+      "id": "product-knowledge-preflight",
+      "label": "发送前权限预检",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-knowledge-reference",
+      "summary": "消息发送前检查知识库是否仍可访问，避免无效请求进入生成流。",
+      "details": "前端发送消息前先调用检查接口；知识库不可用时展示明确权限提示，并撤回页面上刚插入的临时用户消息，不再调用流式生成接口。",
+      "files": [
+        "web/src/stores/chat.ts",
+        "web/src/api/chat.ts",
+        "server/src/modules/messages/message.service.ts"
+      ],
+      "tags": [
+        "发送前检查",
+        "权限",
+        "友好提示"
+      ]
+    },
+    {
+      "id": "product-knowledge-revocation",
+      "label": "权限变更即时生效",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-knowledge-reference",
+      "summary": "成员被移除或知识库转私有后，已有引用同步失效。",
+      "details": "权限变化时后端清理受影响用户的会话绑定；即使用户未刷新页面，发送前检查和流式接口兜底校验仍会阻止继续引用。",
+      "files": [
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts",
+        "server/src/modules/conversations/conversation.service.ts",
+        "server/src/modules/messages/message.service.ts"
+      ],
+      "tags": [
+        "权限撤销",
+        "会话清理",
+        "兜底校验"
+      ]
+    },
+    {
+      "id": "product-knowledge-retrieval",
+      "label": "可靠知识检索问答",
+      "layer": "product",
+      "group": "product",
+      "nodeType": "capability",
+      "parentId": "product-knowledge-reference",
+      "summary": "兼顾语义相关性和关键词命中，提升长文档与短词问题的召回。",
+      "details": "知识问答结合向量召回、关键词补充和旧索引完整源内容恢复，避免长文档只覆盖开头，也能处理昵称、专有名词等短词问题。",
+      "files": [
+        "server/src/modules/knowledge-bases/knowledge-base-rag.service.ts",
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts",
+        "server/src/lib/chunker.ts"
+      ],
+      "tags": [
+        "向量召回",
+        "关键词",
+        "长文档"
+      ]
+    },
+    {
+      "id": "frontend-app",
+      "label": "React 前端应用",
+      "layer": "technical",
+      "group": "frontend",
+      "nodeType": "module",
+      "summary": "React 19 + Vite + Zustand + Ant Design 组成前端体验层。",
+      "details": "前端负责路由、登录态恢复、聊天布局、知识库页面、后台模型管理、设置弹窗、架构图页面、移动端响应式和流式消息展示。",
+      "files": [
+        "web/src/main.tsx",
+        "web/src/router/index.tsx",
+        "web/src/stores/chat.ts",
+        "web/src/views/ArchitectureView.tsx"
+      ],
+      "tags": [
+        "React 19",
+        "Zustand",
+        "Vite"
+      ]
+    },
+    {
+      "id": "frontend-model-admin",
+      "label": "模型管理后台",
+      "layer": "technical",
+      "group": "frontend",
+      "nodeType": "module",
+      "summary": "响应式 /admin 页面承载模型配置、排序和全员切换操作。",
+      "details": "AdminView 通过公共管理页侧栏组织对话模型和专用模型两个区域；对话模型使用 Sortable 调整顺序，所有写操作通过 admin-model API 调用管理员专用接口，并兼容 PC 与移动端。",
+      "files": [
+        "web/src/views/AdminView.tsx",
+        "web/src/api/admin-model.ts",
+        "web/src/components/management/ManagementSidebar.tsx",
+        "web/src/types/admin-model.ts"
+      ],
+      "tags": [
+        "React",
+        "Sortable",
+        "Responsive"
+      ]
+    },
+    {
+      "id": "frontend-network",
+      "label": "前端通信层",
+      "layer": "technical",
+      "group": "frontend",
+      "nodeType": "module",
+      "summary": "统一封装 HTTP、SSE、token、文件 URL 和 client tool 回传。",
+      "details": "前端 API 层负责请求鉴权、401 处理、访客登录和本地恢复身份、SSE 事件解析、上传进度、文件临时地址兑换，以及浏览器能力工具的执行和结果回传。",
+      "files": [
+        "web/src/api/http.ts",
+        "web/src/api/auth.ts",
+        "web/src/stores/auth.ts",
+        "web/src/utils/guest-identity.ts",
+        "web/src/api/chat.ts",
+        "web/src/api/file.ts",
+        "web/src/utils/client-tools.ts"
+      ],
+      "tags": [
+        "HTTP",
+        "SSE",
+        "访客恢复"
+      ]
+    },
+    {
+      "id": "browser-client-tools",
+      "label": "浏览器能力执行器",
+      "layer": "technical",
+      "group": "frontend",
+      "nodeType": "module",
+      "summary": "前端执行后端请求的浏览器能力，并把结果回传给工具链。",
+      "details": "后端通过 SSE 下发 client-tool-request；前端解析后调用 web/src/utils/client-tools.ts，目前 getBrowserLocation 会使用 navigator.geolocation 获取经纬度，再 POST client-tool-result 唤醒后端工具。",
+      "files": [
+        "web/src/api/chat.ts",
+        "web/src/stores/chat.ts",
+        "web/src/utils/client-tools.ts",
+        "server/src/lib/tool-context.ts"
+      ],
+      "tags": [
+        "Client Tool",
+        "SSE",
+        "Geolocation"
+      ]
+    },
+    {
+      "id": "backend-api",
+      "label": "Express API",
+      "layer": "technical",
+      "group": "backend",
+      "nodeType": "module",
+      "summary": "后端 API 统一挂载 /api，承载认证、会话、消息、文件、记忆、知识库和管理员模型配置。",
+      "details": "Express 后端按模块划分 controller/service/routes/schema，中间件负责鉴权、参数校验和错误处理；认证模块同时承载正式用户和可恢复访客登录，Prisma 作为数据库访问层。",
+      "files": [
+        "server/src/app.ts",
+        "server/src/modules/index.ts",
+        "server/src/middlewares/auth.ts",
+        "server/src/modules/auth/auth.service.ts",
+        "server/src/modules/conversations/conversation.service.ts",
+        "server/src/modules/messages/message.service.ts"
+      ],
+      "tags": [
+        "Express",
+        "Prisma",
+        "JWT"
+      ]
+    },
+    {
+      "id": "backend-guest-auth",
+      "label": "可恢复访客认证",
+      "layer": "technical",
+      "group": "backend",
+      "nodeType": "module",
+      "summary": "创建递增访客账号，并通过高熵恢复密钥重新识别同一浏览器访客。",
+      "details": "POST /api/auth/guest 对恢复密钥做 SHA-256 后查找访客；未命中时通过 PostgreSQL sequence 原子生成 Visitor_0001 递增展示名并创建用户。访客与正式用户复用相同 JWT 和 Refresh Cookie 时长。",
+      "files": [
+        "server/src/modules/auth/auth.routes.ts",
+        "server/src/modules/auth/auth.service.ts",
+        "server/prisma/schema.prisma",
+        "web/src/utils/guest-identity.ts"
+      ],
+      "tags": [
+        "Guest",
+        "身份恢复",
+        "JWT"
+      ]
+    },
+    {
+      "id": "backend-model-management",
+      "label": "管理员模型配置 API",
+      "layer": "technical",
+      "group": "backend",
+      "nodeType": "module",
+      "summary": "仅管理员可访问的模型 CRUD、排序和用户偏好批量切换服务。",
+      "details": "admin-models 模块负责参数校验、默认模型约束、对话模型批量排序、全部用户偏好切换及配置变更后的运行时缓存失效；admin 中间件限制只有管理员能够访问。",
+      "files": [
+        "server/src/modules/admin-models/admin-model.routes.ts",
+        "server/src/modules/admin-models/admin-model.controller.ts",
+        "server/src/modules/admin-models/admin-model.service.ts",
+        "server/src/modules/admin-models/admin-model.schema.ts",
+        "server/src/middlewares/admin.ts"
+      ],
+      "tags": [
+        "Admin API",
+        "CRUD",
+        "批量更新"
+      ]
+    },
+    {
+      "id": "backend-knowledge",
+      "label": "知识库权限服务",
+      "layer": "technical",
+      "group": "backend",
+      "nodeType": "module",
+      "summary": "知识库 CRUD、编辑、团队邀请、成员管理和对话引用权限。",
+      "details": "后端控制 private/team 权限，提供邀请/接受/拒绝/移除/退出；messages/stream 在持久化前统一校验权限，权限变化时清理会话绑定。",
+      "files": [
+        "server/src/modules/knowledge-bases/knowledge-base.service.ts",
+        "server/src/modules/knowledge-bases/knowledge-base.controller.ts",
+        "server/src/modules/messages/message.service.ts"
+      ],
+      "tags": [
+        "权限",
+        "团队",
+        "预检"
+      ]
+    },
+    {
+      "id": "ai-orchestrator",
+      "label": "AI 编排",
+      "layer": "technical",
+      "group": "ai",
+      "nodeType": "module",
+      "summary": "LangChain 模型调用、工具循环、深度思考和上下文组装。",
+      "details": "负责将会话历史、个人记忆、文件、知识库、回答风格和工具能力组装进模型调用；支持深度思考 reasoning_content 和多轮 tool calling。",
+      "files": [
+        "server/src/lib/ai.ts",
+        "server/src/lib/model-registry.ts",
+        "server/src/lib/speech-style.ts"
+      ],
+      "tags": [
+        "LangChain",
+        "Qwen",
+        "Tool Calling"
+      ]
+    },
+    {
+      "id": "ai-model-registry",
+      "label": "运行时模型注册表",
+      "layer": "technical",
+      "group": "ai",
+      "nodeType": "module",
+      "summary": "从数据库解析各类当前模型，并以短时缓存向 AI 调用链提供统一配置。",
+      "details": "model-registry 按类型读取 AiModel，提供可选对话模型、默认专用模型和文生图参数；配置写入后立即失效缓存，数据库暂不可用时使用内置安全回退，避免核心 AI 能力直接中断。",
+      "files": [
+        "server/src/lib/model-registry.ts",
+        "server/src/lib/ai.ts",
+        "server/src/lib/embeddings.ts",
+        "server/src/lib/vision.ts",
+        "server/src/lib/audio.ts",
+        "server/src/lib/tools/drawImage.ts"
+      ],
+      "tags": [
+        "Runtime Config",
+        "Cache",
+        "Fallback"
+      ]
+    },
+    {
+      "id": "rag-system",
+      "label": "RAG 检索系统",
+      "layer": "technical",
+      "group": "ai",
+      "nodeType": "module",
+      "summary": "文本分块、Embedding、pgvector 检索、TopK 补齐和关键词兜底。",
+      "details": "文件和知识库会被切成重叠 chunk，生成向量后写入 pgvector；提问时检索相关片段并注入 prompt，短词昵称类问题补充关键词兜底。",
+      "files": [
+        "server/src/lib/chunker.ts",
+        "server/src/lib/embeddings.ts",
+        "server/src/modules/files/rag.service.ts",
+        "server/src/modules/knowledge-bases/knowledge-base-rag.service.ts"
+      ],
+      "tags": [
+        "Embedding",
+        "pgvector",
+        "Chunking"
+      ]
+    },
+    {
+      "id": "tool-runtime",
+      "label": "工具与浏览器桥接",
+      "layer": "technical",
+      "group": "ai",
+      "nodeType": "module",
+      "summary": "统一承载 webSearch、drawImage、readFile、semanticSearch 和位置工具。",
+      "details": "后端工具使用 request-scoped context 做权限约束；webSearchTool 连接 DashScope WebSearch MCP，drawImageTool 调 DashScope 图片生成并把结果转存 R2，getUserLocationTool 通过浏览器能力拿经纬度后调用高德逆地理编码。",
+      "files": [
+        "server/src/lib/tools/tools.ts",
+        "server/src/lib/tool-context.ts",
+        "server/src/lib/mcp.ts",
+        "server/src/lib/tools/webSearch.ts",
+        "server/src/lib/tools/drawImage.ts",
+        "server/src/lib/tools/userLocation.ts"
+      ],
+      "tags": [
+        "MCP",
+        "Tool Calling",
+        "外部服务"
+      ]
+    },
+    {
+      "id": "external-database",
+      "label": "PostgreSQL / pgvector",
+      "layer": "technical",
+      "group": "external",
+      "nodeType": "module",
+      "summary": "Neon PostgreSQL 存业务数据，pgvector 支撑向量检索。",
+      "details": "数据库保存正式用户和访客类型、访客恢复密钥哈希、Visitor 展示名 sequence、会话、消息、记忆、文件、知识库、团队成员、邀请、AiModel 配置和 chunk 向量；Prisma schema 是数据模型核心。",
+      "files": [
+        "server/prisma/schema.prisma",
+        "server/src/lib/prisma.ts"
+      ],
+      "tags": [
+        "Prisma",
+        "Neon",
+        "pgvector"
+      ]
+    },
+    {
+      "id": "data-ai-model-config",
+      "label": "AiModel 配置表",
+      "layer": "technical",
+      "group": "external",
+      "nodeType": "module",
+      "summary": "持久化对话、向量、多模态、语音和文生图模型的统一配置。",
+      "details": "AiModel 保存模型标识、展示名称、类型、默认状态、用户可选状态、排序、向量维度和 JSON 运行参数；对话模型允许多条，专用能力由默认项确定当前配置。",
+      "files": [
+        "server/prisma/schema.prisma",
+        "server/prisma/migrations/20260723000000_add_ai_model_management/migration.sql"
+      ],
+      "tags": [
+        "Prisma",
+        "AiModel",
+        "Model Config"
+      ]
+    },
+    {
+      "id": "external-storage",
+      "label": "Cloudflare R2",
+      "layer": "technical",
+      "group": "external",
+      "nodeType": "module",
+      "summary": "附件、图片和生成结果的对象存储。",
+      "details": "后端只在业务接口中保存 storageKey，前端通过批量 URL 兑换获取预签名访问地址；图片生成和文件上传都复用 R2 存储。",
+      "files": [
+        "server/src/utils/obs.ts",
+        "server/src/modules/files/file.service.ts",
+        "server/src/lib/tools/drawImage.ts"
+      ],
+      "tags": [
+        "Object Storage",
+        "Presigned URL",
+        "S3 API"
+      ]
+    },
+    {
+      "id": "external-dashscope-websearch",
+      "label": "阿里云联网搜索 MCP",
+      "layer": "technical",
+      "group": "external",
+      "nodeType": "module",
+      "summary": "DashScope WebSearch MCP 为 webSearchTool 提供实时联网检索。",
+      "details": "server/src/lib/tools/webSearch.ts 使用 DASHSCOPE_WEBSEARCH_MCP_URL 和 DASHSCOPE_API_KEY 初始化 MyMcpClient，并调用 bailian_web_search，把搜索结果交给模型回答实时问题。",
+      "files": [
+        "server/src/lib/tools/webSearch.ts",
+        "server/src/lib/mcp.ts",
+        "server/src/config/env.ts"
+      ],
+      "tags": [
+        "DashScope",
+        "MCP",
+        "联网搜索"
+      ]
+    },
+    {
+      "id": "external-dashscope-image",
+      "label": "阿里云图片生成",
+      "layer": "technical",
+      "group": "external",
+      "nodeType": "module",
+      "summary": "DashScope 图片生成接口为 drawImageTool 生成图片。",
+      "details": "server/src/lib/tools/drawImage.ts 使用 DASHSCOPE_IMAGE_GENERATION_URL 和后台模型配置调用阿里云图片生成；模型标识、默认尺寸、提示词扩展和水印来自 AiModel 表，拿到临时图片 URL 后下载并转存到 Cloudflare R2。",
+      "files": [
+        "server/src/lib/tools/drawImage.ts",
+        "server/src/config/env.ts",
+        "server/src/utils/obs.ts"
+      ],
+      "tags": [
+        "DashScope",
+        "Image Generation",
+        "R2"
+      ]
+    },
+    {
+      "id": "external-amap",
+      "label": "高德地图逆地理编码",
+      "layer": "technical",
+      "group": "external",
+      "nodeType": "module",
+      "summary": "高德地图把浏览器经纬度转换成可读行政区位置。",
+      "details": "getUserLocationTool 先请求浏览器 getBrowserLocation，再用 AMAP_REGEOCODE_URL 和 AMAP_API_KEY 调高德逆地理编码接口，返回国家、省、市、区等位置文本给模型。",
+      "files": [
+        "server/src/lib/tools/userLocation.ts",
+        "server/src/config/env.ts",
+        "web/src/utils/client-tools.ts"
+      ],
+      "tags": [
+        "Amap",
+        "Geolocation",
+        "位置服务"
+      ]
+    },
+    {
+      "id": "external-ai",
+      "label": "阿里云 LLM / Embedding",
+      "layer": "technical",
+      "group": "external",
+      "nodeType": "module",
+      "summary": "DashScope / OpenAI 兼容模型、Embedding 和多模态视觉分析。",
+      "details": "模型服务提供聊天、深度思考 reasoning_content、Embedding 和多模态视觉分析；联网搜索、图片生成和位置服务在架构图中拆成独立外部节点，方便展示工具链边界。",
+      "files": [
+        "server/src/config/env.ts",
+        "server/src/lib/model-registry.ts",
+        "server/src/lib/embeddings.ts"
+      ],
+      "tags": [
+        "DashScope",
+        "Embedding",
+        "Multimodal"
+      ]
+    },
+    {
+      "id": "deployment",
+      "label": "部署与反向代理",
+      "layer": "technical",
+      "group": "external",
+      "nodeType": "module",
+      "summary": "Docker、Nginx、Railway 双服务和健康检查。",
+      "details": "server 和 web 独立部署；前端 Nginx 托管静态资源并反向代理 /api 和 /health 到后端服务。",
+      "files": [
+        "server/Dockerfile",
+        "web/Dockerfile",
+        "web/nginx.conf",
+        "docker-compose.yml"
+      ],
+      "tags": [
+        "Docker",
+        "Nginx",
+        "Railway"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "product-entry",
+      "target": "product-chat",
+      "label": "进入工作台",
+      "type": "product"
+    },
+    {
+      "source": "product-chat",
+      "target": "product-conversation-management",
+      "label": "管理会话",
+      "type": "product"
+    },
+    {
+      "source": "product-chat",
+      "target": "product-message-operations",
+      "label": "操作消息",
+      "type": "product"
+    },
+    {
+      "source": "product-chat",
+      "target": "product-ai-capabilities",
+      "label": "触发 AI 能力",
+      "type": "product"
+    },
+    {
+      "source": "product-chat",
+      "target": "product-files",
+      "label": "上传附件问答",
+      "type": "product"
+    },
+    {
+      "source": "product-chat",
+      "target": "product-memory",
+      "label": "沉淀个性记忆",
+      "type": "product"
+    },
+    {
+      "source": "product-chat",
+      "target": "product-preferences",
+      "label": "调整偏好",
+      "type": "product"
+    },
+    {
+      "source": "product-entry",
+      "target": "product-knowledge-management",
+      "label": "管理知识库",
+      "type": "product"
+    },
+    {
+      "source": "product-entry",
+      "target": "product-model-admin",
+      "label": "管理员进入后台",
+      "type": "product"
+    },
+    {
+      "source": "product-model-admin",
+      "target": "product-preferences",
+      "label": "发布用户可选模型",
+      "type": "product"
+    },
+    {
+      "source": "product-knowledge-management",
+      "target": "product-knowledge-collaboration",
+      "label": "团队协作",
+      "type": "product"
+    },
+    {
+      "source": "product-knowledge-collaboration",
+      "target": "product-knowledge-reference",
+      "label": "授权引用",
+      "type": "product"
+    },
+    {
+      "source": "product-knowledge-reference",
+      "target": "product-chat",
+      "label": "进入对话问答",
+      "type": "product"
+    },
+    {
+      "source": "product-conversation-management",
+      "target": "product-project-context",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-conversation-management",
+      "target": "product-conversation-movement",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-conversation-management",
+      "target": "product-conversation-find",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-message-operations",
+      "target": "product-message-regenerate",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-message-operations",
+      "target": "product-stream-recovery",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-files",
+      "target": "product-image-understanding",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-files",
+      "target": "product-large-file-qa",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-memory",
+      "target": "product-memory-extraction",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-memory",
+      "target": "product-memory-control",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-ai-capabilities",
+      "target": "product-web-search",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-ai-capabilities",
+      "target": "product-image-generation",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-ai-capabilities",
+      "target": "product-location-awareness",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-preferences",
+      "target": "product-model-style",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-model-admin",
+      "target": "product-chat-model-governance",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-model-admin",
+      "target": "product-specialized-model-governance",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-knowledge-management",
+      "target": "product-knowledge-stable-update",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-knowledge-management",
+      "target": "product-knowledge-reindex",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-knowledge-management",
+      "target": "product-knowledge-visibility",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-knowledge-collaboration",
+      "target": "product-invitation-lifecycle",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-knowledge-collaboration",
+      "target": "product-knowledge-roles",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-knowledge-collaboration",
+      "target": "product-membership-exit",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-knowledge-reference",
+      "target": "product-knowledge-preflight",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-knowledge-reference",
+      "target": "product-knowledge-revocation",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "product-knowledge-reference",
+      "target": "product-knowledge-retrieval",
+      "label": "代表能力",
+      "type": "capability"
+    },
+    {
+      "source": "frontend-app",
+      "target": "frontend-network",
+      "label": "调用 API / SSE",
+      "type": "http"
+    },
+    {
+      "source": "frontend-app",
+      "target": "frontend-model-admin",
+      "label": "管理员入口",
+      "type": "internal"
+    },
+    {
+      "source": "frontend-model-admin",
+      "target": "frontend-network",
+      "label": "模型管理请求",
+      "type": "http"
+    },
+    {
+      "source": "frontend-network",
+      "target": "backend-api",
+      "label": "/api",
+      "type": "http"
+    },
+    {
+      "source": "backend-api",
+      "target": "backend-guest-auth",
+      "label": "访客认证",
+      "type": "internal"
+    },
+    {
+      "source": "backend-guest-auth",
+      "target": "external-database",
+      "label": "身份恢复 / 创建",
+      "type": "data"
+    },
+    {
+      "source": "backend-api",
+      "target": "backend-knowledge",
+      "label": "知识库业务",
+      "type": "internal"
+    },
+    {
+      "source": "backend-api",
+      "target": "backend-model-management",
+      "label": "管理员模型接口",
+      "type": "internal"
+    },
+    {
+      "source": "backend-model-management",
+      "target": "data-ai-model-config",
+      "label": "CRUD / 排序",
+      "type": "data"
+    },
+    {
+      "source": "backend-model-management",
+      "target": "ai-model-registry",
+      "label": "配置变更后清缓存",
+      "type": "internal"
+    },
+    {
+      "source": "backend-api",
+      "target": "ai-orchestrator",
+      "label": "消息生成",
+      "type": "ai"
+    },
+    {
+      "source": "backend-knowledge",
+      "target": "rag-system",
+      "label": "重建索引 / 检索",
+      "type": "ai"
+    },
+    {
+      "source": "ai-orchestrator",
+      "target": "rag-system",
+      "label": "知识上下文",
+      "type": "ai"
+    },
+    {
+      "source": "ai-orchestrator",
+      "target": "ai-model-registry",
+      "label": "解析对话模型",
+      "type": "internal"
+    },
+    {
+      "source": "rag-system",
+      "target": "ai-model-registry",
+      "label": "解析向量模型",
+      "type": "internal"
+    },
+    {
+      "source": "tool-runtime",
+      "target": "ai-model-registry",
+      "label": "解析专用模型",
+      "type": "internal"
+    },
+    {
+      "source": "ai-model-registry",
+      "target": "data-ai-model-config",
+      "label": "读取当前配置",
+      "type": "data"
+    },
+    {
+      "source": "ai-model-registry",
+      "target": "external-ai",
+      "label": "调用已配置模型",
+      "type": "ai"
+    },
+    {
+      "source": "ai-orchestrator",
+      "target": "tool-runtime",
+      "label": "工具调用",
+      "type": "tool"
+    },
+    {
+      "source": "tool-runtime",
+      "target": "external-dashscope-websearch",
+      "label": "webSearchTool",
+      "type": "tool"
+    },
+    {
+      "source": "tool-runtime",
+      "target": "external-dashscope-image",
+      "label": "drawImageTool",
+      "type": "tool"
+    },
+    {
+      "source": "external-dashscope-image",
+      "target": "external-storage",
+      "label": "生成图转存",
+      "type": "storage"
+    },
+    {
+      "source": "tool-runtime",
+      "target": "browser-client-tools",
+      "label": "client-tool-request",
+      "type": "sse"
+    },
+    {
+      "source": "browser-client-tools",
+      "target": "external-amap",
+      "label": "经纬度逆地理编码",
+      "type": "tool"
+    },
+    {
+      "source": "ai-orchestrator",
+      "target": "external-ai",
+      "label": "LLM / Embedding",
+      "type": "ai"
+    },
+    {
+      "source": "backend-api",
+      "target": "external-database",
+      "label": "业务数据",
+      "type": "data"
+    },
+    {
+      "source": "data-ai-model-config",
+      "target": "external-database",
+      "label": "Prisma 持久化",
+      "type": "data"
+    },
+    {
+      "source": "rag-system",
+      "target": "external-database",
+      "label": "向量分片",
+      "type": "data"
+    },
+    {
+      "source": "backend-api",
+      "target": "external-storage",
+      "label": "文件对象",
+      "type": "storage"
+    },
+    {
+      "source": "deployment",
+      "target": "frontend-network",
+      "label": "Nginx 代理",
+      "type": "deploy"
+    }
+  ],
+  "flows": [
+    {
+      "id": "product-chat-flow",
+      "label": "AI 对话产品链路",
+      "description": "用户登录后进入对话工作台，通过会话管理组织和找回历史内容，在一次提问中可结合消息操作、附件、长期记忆、个性化偏好和 AI 工具能力完成任务。",
+      "steps": [
+        "product-entry",
+        "product-chat",
+        "product-conversation-management",
+        "product-message-operations",
+        "product-files",
+        "product-memory",
+        "product-preferences",
+        "product-ai-capabilities"
+      ]
+    },
+    {
+      "id": "product-knowledge-flow",
+      "label": "知识库产品链路",
+      "description": "知识库先在独立页面完成上传、编辑、重建索引和团队协作，再作为可访问资料被对话引用；它不是对话的附属功能，而是一条可独立维护的知识资产链路。",
+      "steps": [
+        "product-entry",
+        "product-knowledge-management",
+        "product-knowledge-collaboration",
+        "product-knowledge-reference",
+        "product-chat"
+      ]
+    },
+    {
+      "id": "product-model-admin-flow",
+      "label": "后台模型治理链路",
+      "description": "管理员进入模型后台维护对话和专用模型；对话模型的默认项与排序直接发布到用户设置，必要时可将全部用户统一切换到指定模型，运行时能力同步读取最新专用配置。",
+      "steps": [
+        "product-entry",
+        "product-model-admin",
+        "product-preferences",
+        "product-chat",
+        "product-ai-capabilities"
+      ]
+    },
+    {
+      "id": "model-management-technical-flow",
+      "label": "模型配置运行时链路",
+      "description": "模型管理后台通过管理员 API 写入 AiModel 表并使注册表缓存失效；聊天、RAG、图片理解、语音和文生图调用时由运行时注册表解析当前配置，再访问外部模型服务。",
+      "steps": [
+        "frontend-model-admin",
+        "frontend-network",
+        "backend-model-management",
+        "data-ai-model-config",
+        "ai-model-registry",
+        "ai-orchestrator",
+        "external-ai"
+      ]
+    },
+    {
+      "id": "guest-auth-technical-flow",
+      "label": "可恢复访客认证链路",
+      "description": "前端读取浏览器保存的访客恢复密钥并调用访客认证接口；后端按密钥哈希恢复已有访客，或通过数据库 sequence 创建递增访客账号，再复用统一 JWT 会话返回工作台。",
+      "steps": [
+        "frontend-app",
+        "frontend-network",
+        "backend-api",
+        "backend-guest-auth",
+        "external-database"
+      ]
+    },
+    {
+      "id": "chat-technical-flow",
+      "label": "AI 对话技术链路",
+      "description": "前端工作台通过 API/SSE 连接后端消息服务，后端组装上下文、调用工具和模型，再把流式结果返回前端。",
+      "steps": [
+        "frontend-app",
+        "frontend-network",
+        "backend-api",
+        "ai-orchestrator",
+        "tool-runtime",
+        "external-ai"
+      ]
+    },
+    {
+      "id": "tool-external-flow",
+      "label": "工具与外部服务链路",
+      "description": "模型触发工具后，后端工具运行时按工具类型连接 DashScope WebSearch MCP、DashScope 图片生成、浏览器定位和高德逆地理编码；生成图片会转存到 R2 后再返回前端。",
+      "steps": [
+        "ai-orchestrator",
+        "tool-runtime",
+        "external-dashscope-websearch",
+        "external-dashscope-image",
+        "external-storage",
+        "browser-client-tools",
+        "external-amap"
+      ]
+    },
+    {
+      "id": "knowledge-technical-flow",
+      "label": "知识库 RAG 技术链路",
+      "description": "知识库服务管理权限和内容更新，RAG 系统负责切分、Embedding、向量存储和检索，回答时把相关片段注入模型上下文。",
+      "steps": [
+        "frontend-app",
+        "backend-knowledge",
+        "rag-system",
+        "external-ai",
+        "external-database",
+        "ai-orchestrator"
+      ]
+    },
+    {
+      "id": "storage-deploy-flow",
+      "label": "外部系统与部署链路",
+      "description": "后端通过 Prisma 访问 PostgreSQL/pgvector，通过 R2 保存对象文件；生产环境由 Docker、Railway 和 Nginx 代理组成。",
+      "steps": [
+        "deployment",
+        "frontend-network",
+        "backend-api",
+        "external-database",
+        "external-storage",
+        "external-ai"
+      ]
+    }
+  ]
+}

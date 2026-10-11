@@ -1,0 +1,104 @@
+.mobile-action-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+  padding: 12px;
+  background: rgba(12, 20, 32, 0.42);
+  backdrop-filter: blur(4px);
+}
+.mobile-action-sheet {
+  width: min(100%, 560px);
+  margin: 0 auto;
+  padding: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.64);
+  border-radius: 16px;
+  background: rgba(247, 250, 253, 0.9);
+  box-shadow: 0 22px 60px rgba(10, 31, 55, 0.24);
+  backdrop-filter: blur(24px) saturate(1.5);
+  animation: mobile-sheet-in 0.2s ease-out;
+}
+.mobile-action-sheet header {
+  padding: 8px 8px 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mobile-action-sheet h3 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobile-action-sheet header button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+.mobile-action-sheet-content {
+  display: grid;
+  gap: 4px;
+}
+.mobile-action-sheet-item {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--text-primary);
+  background: transparent;
+  text-align: left;
+}
+.mobile-action-sheet-item:active {
+  background: var(--bg-hover);
+}
+.mobile-action-sheet-item > span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--accent);
+  background: var(--bg-badge);
+}
+.mobile-action-sheet-item--danger {
+  color: var(--color-danger);
+}
+.mobile-action-sheet-item--danger > span {
+  color: var(--color-danger);
+  background: rgba(239, 68, 68, 0.1);
+}
+:root[data-theme='dark'] .mobile-action-sheet {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(15, 23, 38, 0.92);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.48);
+}
+@keyframes mobile-sheet-in {
+  from {
+    transform: translateY(18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-action-sheet {
+    animation: none;
+  }
+}

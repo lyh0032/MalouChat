@@ -1,0 +1,107 @@
+.knowledge-editor-form {
+  margin-top: 18px;
+}
+.knowledge-editor-file {
+  min-height: 42px;
+}
+.knowledge-editor-file-input {
+  display: none !important;
+}
+.knowledge-editor-file-chip,
+.knowledge-editor-upload {
+  width: 100%;
+  min-height: 42px;
+}
+.knowledge-editor-file-chip {
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  background: var(--bg-hover);
+}
+.knowledge-editor-file-chip span:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.knowledge-editor-upload {
+  justify-content: flex-start;
+  border-style: dashed;
+}
+.knowledge-detail {
+  display: grid;
+  gap: 20px;
+}
+.knowledge-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.knowledge-detail-header strong {
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1.4;
+}
+.knowledge-detail-status {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.knowledge-detail-status--completed {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+.knowledge-detail-status--queued,
+.knowledge-detail-status--processing {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+.knowledge-detail-status--failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+.knowledge-detail-error {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+.knowledge-detail section {
+  display: grid;
+  gap: 7px;
+}
+.knowledge-detail h4 {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.knowledge-detail p {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+.knowledge-detail-attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: var(--bg-hover);
+}
+.knowledge-detail-attachment span {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.knowledge-detail-muted {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 13px;
+}

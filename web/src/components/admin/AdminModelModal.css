@@ -1,0 +1,62 @@
+.admin-model-form {
+  max-height: min(68vh, 650px);
+  margin-top: 18px;
+  padding-right: 3px;
+  overflow-y: auto;
+}
+.admin-model-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+.admin-model-form .ant-input-number {
+  width: 100%;
+}
+.admin-model-switch-row {
+  min-height: 74px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-element);
+}
+.admin-model-switch-row > span {
+  display: grid;
+  gap: 3px;
+}
+.admin-model-switch-row small {
+  color: var(--text-secondary);
+}
+.admin-image-settings {
+  padding: 15px;
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-element);
+}
+.admin-image-settings p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.admin-image-settings .ant-form-item {
+  margin-bottom: 0;
+}
+.admin-image-settings > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .admin-model-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-model-form {
+    max-height: 62vh;
+  }
+}

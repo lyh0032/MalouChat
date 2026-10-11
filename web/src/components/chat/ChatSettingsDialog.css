@@ -1,0 +1,87 @@
+.chat-settings-titlebar {
+  min-width: 0;
+  padding-right: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.chat-settings-title-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.chat-settings {
+  width: 100%;
+  height: min(440px, 68vh);
+  margin-top: 12px;
+  padding-right: 14px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  display: grid;
+  align-content: start;
+  gap: 24px;
+}
+.chat-settings section {
+  display: grid;
+  gap: 8px;
+}
+.chat-settings h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+.chat-settings-row {
+  min-height: 64px;
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--border-light);
+}
+.chat-settings-row > span {
+  display: grid;
+  gap: 3px;
+}
+.chat-settings-row small {
+  color: var(--text-secondary);
+}
+.chat-settings-row > .ant-select,
+.chat-settings-row > .ant-segmented,
+.chat-settings-row > .ant-btn {
+  width: min(260px, 48%);
+  flex: 0 0 min(260px, 48%);
+}
+.chat-settings-row > .ant-segmented .ant-segmented-group {
+  width: 100%;
+}
+.chat-settings-row > .ant-segmented .ant-segmented-item {
+  min-width: 0;
+  flex: 1;
+}
+@media (max-width: 640px) {
+  .chat-settings-titlebar {
+    gap: 8px;
+  }
+  .chat-settings-title-actions {
+    gap: 4px;
+  }
+  .chat-settings-title-actions .ant-btn {
+    padding-inline: 7px;
+  }
+  .chat-settings {
+    padding-right: 10px;
+  }
+  .chat-settings-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .chat-settings-row > .ant-select,
+  .chat-settings-row > .ant-segmented,
+  .chat-settings-row > .ant-btn {
+    width: 100%;
+    flex-basis: auto;
+  }
+}

@@ -1,0 +1,13 @@
+.auth-theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 3;
+}
+
+@media (max-width: 640px) {
+  .auth-theme-toggle {
+    top: 12px;
+    right: 12px;
+  }
+}

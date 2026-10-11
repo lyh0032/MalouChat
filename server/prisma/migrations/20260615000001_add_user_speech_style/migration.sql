@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "speechStyle" TEXT NOT NULL DEFAULT 'default';

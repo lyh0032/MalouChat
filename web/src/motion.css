@@ -1,0 +1,30 @@
+@import 'animate.css/source/fading_entrances/fadeIn.css';
+@import 'animate.css/source/fading_entrances/fadeInUp.css';
+@import 'animate.css/source/fading_exits/fadeOut.css';
+@import 'animate.css/source/fading_exits/fadeOutDown.css';
+
+.motion-animated {
+  animation-duration: var(--motion-duration, 220ms);
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.motion-duration-quick {
+  --motion-duration: 140ms;
+}
+
+.motion-duration-fast {
+  --motion-duration: 180ms;
+}
+
+.motion-duration-standard {
+  --motion-duration: 240ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-animated {
+    animation-delay: 0ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

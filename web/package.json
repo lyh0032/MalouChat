@@ -1,0 +1,38 @@
+{
+  "name": "malou-chat-web",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "generate:architecture": "node ../scripts/generate-architecture-data.mjs",
+    "prebuild": "yarn generate:architecture",
+    "dev": "vite",
+    "build": "yarn build:app",
+    "build:app": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons": "6.3.2",
+    "@antv/g6": "^5.1.1",
+    "animate.css": "4.1.1",
+    "antd": "6.5.4",
+    "dompurify": "^3.3.3",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.1",
+    "motion": "^13.1.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router-dom": "7.18.2",
+    "sortablejs": "^1.15.7",
+    "zustand": "5.0.14"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.13.14",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@types/sortablejs": "^1.15.9",
+    "@vitejs/plugin-react": "5.2.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.2"
+  }
+}

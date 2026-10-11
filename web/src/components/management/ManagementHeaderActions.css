@@ -1,0 +1,58 @@
+.management-header-actions {
+  min-height: 36px;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(220, 234, 248, 0.2)),
+    rgba(236, 244, 252, 0.38);
+  box-shadow:
+    0 8px 24px rgba(18, 52, 88, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(18, 52, 88, 0.08);
+  backdrop-filter: blur(18px) saturate(1.55) contrast(1.03);
+  -webkit-backdrop-filter: blur(18px) saturate(1.55) contrast(1.03);
+}
+
+.management-header-actions .ant-btn {
+  min-height: 32px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 12px;
+  box-shadow: none;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.management-header-actions .ant-btn-primary {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+.management-header-actions .ant-btn:not(.ant-btn-primary):hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+:root[data-theme='dark'] .management-header-actions {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(90, 139, 201, 0.04)),
+    rgba(8, 13, 24, 0.58);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.26);
+}
+
+@media (max-width: 640px) {
+  .management-header-actions .ant-btn {
+    padding-right: 9px;
+    padding-left: 9px;
+  }
+}

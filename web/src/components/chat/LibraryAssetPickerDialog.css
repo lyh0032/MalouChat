@@ -1,0 +1,110 @@
+.library-asset-picker .ant-modal-content {
+  overflow: hidden;
+}
+
+.library-asset-picker-controls {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.library-asset-picker-list {
+  min-height: 260px;
+  max-height: min(430px, 55vh);
+  overflow: auto;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-surface);
+}
+
+.library-asset-picker-list .ant-empty {
+  margin-block: 70px;
+}
+
+.library-asset-picker-item {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 20px;
+  gap: 10px;
+  border: 0;
+  border-bottom: 1px solid var(--border-light);
+  border-radius: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  transition: background-color 160ms ease;
+}
+
+.library-asset-picker-item:last-child {
+  border-bottom: 0;
+}
+
+.library-asset-picker-item:hover,
+.library-asset-picker-item:focus-visible,
+.library-asset-picker-item.is-selected {
+  background: var(--bg-hover);
+}
+
+.library-asset-picker-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: -2px;
+}
+
+.library-asset-picker-item .ant-radio-wrapper {
+  pointer-events: none;
+}
+
+.library-asset-picker-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-surface));
+  font-size: 17px;
+}
+
+.library-asset-picker-icon.is-generated_image {
+  color: #9a6a10;
+  background: color-mix(in srgb, #d99a22 12%, var(--bg-surface));
+}
+
+.library-asset-picker-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.library-asset-picker-copy strong,
+.library-asset-picker-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-asset-picker-copy strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.library-asset-picker-copy span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .library-asset-picker {
+    width: calc(100vw - 24px) !important;
+    max-width: none;
+  }
+
+  .library-asset-picker-list {
+    min-height: 220px;
+    max-height: 48vh;
+  }
+}

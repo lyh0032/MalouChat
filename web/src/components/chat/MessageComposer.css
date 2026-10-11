@@ -1,0 +1,379 @@
+@property --composer-beam-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.message-composer {
+  position: relative;
+  isolation: isolate;
+  min-height: 120px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-medium);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(18px);
+}
+.message-composer::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--composer-beam-angle),
+    transparent 0 78%,
+    color-mix(in srgb, var(--accent) 88%, white) 87%,
+    var(--gold) 92%,
+    transparent 100%
+  );
+  opacity: 0;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: composer-border-beam 4.96s linear infinite;
+}
+@keyframes composer-border-beam {
+  0% {
+    --composer-beam-angle: 0deg;
+    opacity: 0.72;
+  }
+  35% {
+    opacity: 0.72;
+  }
+  39.5% {
+    --composer-beam-angle: 360deg;
+    opacity: 0;
+  }
+  100% {
+    --composer-beam-angle: 360deg;
+    opacity: 0;
+  }
+}
+.composer-input.ant-input {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.composer-input.ant-input:focus {
+  box-shadow: none;
+}
+.composer-status {
+  min-height: 16px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+.composer-attachment-row {
+  min-height: 92px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0 2px 2px;
+}
+.composer-attachment-card {
+  position: relative;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--border-light) 82%, transparent);
+  border-radius: 13px;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-hover) 72%, var(--bg-surface));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+.composer-attachment-card--image {
+  width: 88px;
+  height: 88px;
+}
+.composer-attachment-card--file {
+  width: 164px;
+  height: 72px;
+}
+.composer-attachment-media,
+.composer-attachment-file-content {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.composer-attachment-media {
+  display: grid;
+  place-items: center;
+  background: var(--bg-hover);
+}
+.composer-attachment-media .ant-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: zoom-in;
+}
+.composer-attachment-media .ant-image-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.composer-attachment-file-content {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+}
+.composer-attachment-file-icon {
+  width: 34px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-surface));
+  font-size: 18px;
+}
+.composer-attachment-file-content strong {
+  min-width: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.composer-attachment-progress {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-surface) 56%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+.composer-attachment-remove.ant-btn {
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  position: absolute;
+  z-index: 3;
+  top: -7px;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--bg-surface) 70%, transparent);
+  border-radius: 50% !important;
+  color: #fff;
+  background: rgba(9, 24, 43, 0.92);
+  box-shadow: 0 3px 9px color-mix(in srgb, var(--text-primary) 18%, transparent);
+}
+.composer-attachment-remove.ant-btn:hover,
+.composer-attachment-remove.ant-btn:focus-visible {
+  color: #fff !important;
+  background: #09182b !important;
+}
+.composer-actions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.composer-actions-left,
+.composer-actions-right {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.composer-actions-right {
+  margin-left: auto;
+}
+.composer-chip {
+  min-width: 0;
+  max-width: 180px;
+  height: 32px;
+  padding: 0 3px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  color: var(--accent);
+  background: var(--bg-hover);
+}
+.composer-chip--kb {
+  color: #2563eb;
+}
+.composer-chip b {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.composer-chip .ant-btn {
+  flex-shrink: 0;
+}
+.composer-knowledge-option {
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.composer-knowledge-option > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.composer-knowledge-option > .anticon {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+.composer-icon-button,
+.composer-actions-right .ant-btn {
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: grid;
+  place-items: center;
+  border-radius: 50% !important;
+}
+.composer-deep-thinking {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 12px !important;
+  flex-shrink: 0;
+  border-radius: 16px !important;
+  white-space: nowrap;
+}
+.composer-hint {
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .message-composer {
+    min-height: 116px;
+    padding: 8px;
+    border-radius: 22px;
+  }
+  .composer-actions {
+    flex-wrap: nowrap;
+  }
+  .composer-actions-left {
+    flex: 1;
+    overflow: hidden;
+  }
+  .composer-actions-right {
+    flex-shrink: 0;
+  }
+  .composer-attachment-row {
+    min-height: 82px;
+    padding-left: 0;
+  }
+  .composer-attachment-row--file {
+    min-height: 58px;
+  }
+  .composer-attachment-card--image {
+    width: 78px;
+    height: 78px;
+  }
+  .composer-attachment-card--file {
+    width: 124px;
+    height: 54px;
+  }
+  .composer-attachment-card--file .composer-attachment-file-content {
+    padding: 7px;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 7px;
+  }
+  .composer-attachment-card--file .composer-attachment-file-icon {
+    width: 28px;
+    height: 34px;
+    border-radius: 7px;
+    font-size: 15px;
+  }
+  .composer-attachment-card--file .composer-attachment-file-content strong {
+    display: block;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    -webkit-line-clamp: unset;
+  }
+  .composer-chip {
+    width: auto;
+    min-width: 32px;
+    max-width: none;
+    padding: 0 3px 0 7px;
+    justify-content: center;
+    gap: 2px;
+  }
+  .composer-chip b {
+    display: none;
+  }
+  .composer-chip .ant-btn {
+    width: 22px !important;
+    min-width: 22px !important;
+    height: 22px !important;
+    padding: 0 !important;
+    position: static;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+  }
+  .composer-chip .ant-btn .anticon {
+    font-size: 11px;
+  }
+  .composer-hint {
+    display: none;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .composer-attachment-remove.ant-btn {
+    opacity: 0;
+    transform: scale(0.82);
+    transition:
+      opacity 0.16s ease,
+      transform 0.16s ease;
+  }
+  .composer-attachment-card:hover .composer-attachment-remove.ant-btn,
+  .composer-attachment-card.is-mobile .composer-attachment-remove.ant-btn,
+  .composer-attachment-remove.ant-btn:focus-visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (hover: none), (pointer: coarse) {
+  .composer-attachment-remove.ant-btn {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .message-composer::before {
+    animation: none;
+  }
+  .composer-attachment-remove.ant-btn {
+    transition: none;
+  }
+}

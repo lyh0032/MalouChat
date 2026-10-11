@@ -1,0 +1,61 @@
+.project-dialog-container {
+  max-height: calc(100dvh - 24px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.project-dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.project-dialog-footer {
+  flex-shrink: 0;
+}
+.project-dialog-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 16px;
+}
+.project-dialog-form > label {
+  display: grid;
+  gap: 8px;
+}
+.project-dialog-form > label > span {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.project-dialog-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.project-dialog-icons button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: var(--bg-element);
+}
+.project-dialog-icons button.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg-active);
+}
+.project-dialog-color-picker {
+  width: 100%;
+  min-height: 34px;
+  justify-content: flex-start;
+}
+.project-dialog-form > label:last-child {
+  padding-bottom: 24px;
+}
+@media (max-width: 640px) {
+  .project-dialog-container {
+    max-height: calc(100dvh - 16px);
+  }
+}

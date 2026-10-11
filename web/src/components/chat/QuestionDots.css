@@ -1,0 +1,176 @@
+.question-dots {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  z-index: 100;
+  transform: translateY(-50%);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.question-dots-surface {
+  position: relative;
+  width: 20px;
+  height: 48px;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-light) 76%, transparent);
+  border-right: 0;
+  border-radius: 15px 0 0 15px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-surface) 58%, transparent);
+  box-shadow: -5px 5px 18px color-mix(in srgb, var(--text-primary) 7%, transparent);
+  backdrop-filter: blur(10px) saturate(1.12);
+  -webkit-backdrop-filter: blur(10px) saturate(1.12);
+  transform-origin: right center;
+  will-change: width, height;
+}
+
+.question-dots-trigger-slot {
+  width: 20px;
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.question-dots-surface.is-expanded {
+  width: min(320px, calc(100vw - 20px));
+  height: auto;
+  max-height: min(62vh, 520px);
+  padding: 7px;
+  border-color: color-mix(in srgb, var(--accent) 16%, var(--border-light));
+  border-radius: 18px 0 0 18px;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-surface) 78%, transparent);
+  box-shadow: -12px 14px 36px color-mix(in srgb, var(--text-primary) 13%, transparent);
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+}
+
+.question-dots-trigger {
+  width: 20px;
+  min-width: 20px;
+  height: 48px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 15px 0 0 15px;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.question-dots-trigger:hover,
+.question-dots-trigger:focus-visible {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  outline: 0;
+}
+
+.question-dots-trigger .anticon {
+  font-size: 12px;
+}
+
+.question-title-list {
+  width: 100%;
+  max-height: calc(min(62vh, 520px) - 14px);
+  display: grid;
+  gap: 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.question-title-list::-webkit-scrollbar {
+  display: none;
+}
+
+.question-title-item {
+  width: 100%;
+  min-height: 40px;
+  padding: 7px 9px 7px 7px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--text-primary);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.question-title-item:hover,
+.question-title-item:focus-visible,
+.question-title-item.is-active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  outline: 0;
+}
+
+.question-title-item:focus-visible {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+.question-title-index {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.question-title-text {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:root[data-theme='dark'] .question-dots-surface {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(17, 27, 43, 0.64);
+  box-shadow: -6px 8px 22px rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme='dark'] .question-dots-surface.is-expanded {
+  border-color: color-mix(in srgb, var(--accent) 24%, rgba(255, 255, 255, 0.1));
+  background: rgba(17, 27, 43, 0.82);
+  box-shadow: -14px 16px 40px rgba(0, 0, 0, 0.38);
+}
+
+@media (max-width: 640px) {
+  .question-dots-surface.is-expanded {
+    width: min(292px, calc(100vw - 14px));
+    max-height: min(58vh, 460px);
+  }
+
+  .question-title-list {
+    max-height: calc(min(58vh, 460px) - 14px);
+  }
+
+  .question-title-item {
+    min-height: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .question-title-item {
+    transition: none;
+  }
+}

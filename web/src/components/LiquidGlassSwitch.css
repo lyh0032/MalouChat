@@ -1,0 +1,169 @@
+.liquid-glass-switch {
+  --liquid-padding: 4px;
+  --liquid-radius: 999px;
+  --liquid-item-height: 38px;
+  --liquid-item-min-width: 74px;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(var(--liquid-count), minmax(0, 1fr));
+  gap: 0;
+  padding: var(--liquid-padding);
+  border: 1px solid rgba(18, 52, 88, 0.16);
+  border-radius: var(--liquid-radius);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42)),
+    rgba(255, 255, 255, 0.56);
+  box-shadow:
+    0 18px 42px rgba(18, 52, 88, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -1px 0 rgba(18, 52, 88, 0.06);
+  overflow: hidden;
+  transform: translateZ(0);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+
+.liquid-glass-switch::before,
+.liquid-glass-switch::after,
+.liquid-glass-switch__thumb::before,
+.liquid-glass-switch__thumb::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.liquid-glass-switch::before {
+  inset: 1px;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.72), transparent 28%),
+    radial-gradient(circle at 86% 86%, rgba(140, 92, 42, 0.12), transparent 34%);
+  opacity: 0.72;
+}
+
+.liquid-glass-switch::after {
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.liquid-glass-switch--sm {
+  --liquid-item-height: 34px;
+  --liquid-item-min-width: 58px;
+}
+
+.liquid-glass-switch__thumb {
+  position: absolute;
+  z-index: 1;
+  top: var(--liquid-padding);
+  bottom: var(--liquid-padding);
+  left: var(--liquid-padding);
+  width: calc((100% - (var(--liquid-padding) * 2)) / var(--liquid-count));
+  border-radius: var(--liquid-radius);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(232, 241, 252, 0.64)),
+    rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 10px 24px rgba(18, 52, 88, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 0 -1px 0 rgba(18, 52, 88, 0.08);
+  transform: translate3d(calc(var(--liquid-index) * 100%), 0, 0);
+  transition:
+    transform 0.46s cubic-bezier(0.2, 1.15, 0.22, 1),
+    box-shadow 0.22s ease;
+  will-change: transform;
+  overflow: hidden;
+}
+
+.liquid-glass-switch__thumb::before {
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 62%);
+}
+
+.liquid-glass-switch__thumb::after {
+  inset: auto 10px 6px;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(18, 52, 88, 0.12), transparent);
+}
+
+.liquid-glass-switch__item {
+  position: relative;
+  z-index: 3;
+  appearance: none;
+  min-width: var(--liquid-item-min-width);
+  min-height: var(--liquid-item-height);
+  border: 0;
+  border-radius: var(--liquid-radius);
+  background: transparent;
+  color: rgba(18, 52, 88, 0.68);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.liquid-glass-switch__item:hover,
+.liquid-glass-switch__item--active {
+  color: var(--accent);
+}
+
+.liquid-glass-switch__item:active {
+  transform: scale(0.98);
+}
+
+html[data-theme='dark'] .liquid-glass-switch {
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(8, 13, 24, 0.66);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24);
+}
+
+html[data-theme='dark'] .liquid-glass-switch__thumb {
+  background:
+    linear-gradient(135deg, rgba(90, 139, 201, 0.28), rgba(255, 255, 255, 0.1)),
+    rgba(25, 38, 60, 0.78);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28);
+}
+
+html[data-theme='dark'] .liquid-glass-switch__item {
+  color: rgba(200, 210, 230, 0.64);
+}
+
+html[data-theme='dark'] .liquid-glass-switch__item:hover,
+html[data-theme='dark'] .liquid-glass-switch__item--active {
+  color: #dbeafe;
+}
+
+@media (max-width: 640px) {
+  .liquid-glass-switch--hide-mobile-labels {
+    --liquid-item-min-width: 42px;
+  }
+
+  .liquid-glass-switch--hide-mobile-labels .liquid-glass-switch__item {
+    padding: 0 10px;
+  }
+
+  .liquid-glass-switch--hide-mobile-labels .liquid-glass-switch__label {
+    display: none;
+  }
+}

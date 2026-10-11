@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  username        String         @unique
+  passwordHash    String
+  type            UserType       @default(registered)
+  guestSecretHash String?        @unique
+  isAdmin         Boolean        @default(false)
+  preferredModel String?
+  speechStyle    String         @default("default")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  conversations Conversation[]
+  projects      Project[]
+  knowledgeBases KnowledgeBase[]
+  knowledgeBaseMemberships KnowledgeBaseMember[]
+  sentKnowledgeBaseInvitations KnowledgeBaseInvitation[] @relation("KnowledgeBaseInvitationInviter")
+  receivedKnowledgeBaseInvitations KnowledgeBaseInvitation[] @relation("KnowledgeBaseInvitationInvitee")
+  memories      Memory[]
+  fileUploads   FileUpload[]
+  conversationDraft ConversationDraft?
+}
+
+model AiModel {
+  id               String      @id @default(cuid())
+  code             String
+  displayName      String
+  description      String      @default("")
+  provider         String      @default("dashscope")
+  type             AiModelType
+  isEnabled        Boolean     @default(true)
+  isUserSelectable Boolean     @default(false)
+  isDefault        Boolean     @default(false)
+  sortOrder        Int         @default(0)
+  dimensions       Int?
+  settings         Json?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([type, code])
+  @@index([type, isEnabled, sortOrder])
+}
+
+model Conversation {
+  id              String    @id @default(cuid())
+  title           String
+  userId          String
+  isPinned        Boolean   @default(false)
+  projectId       String?
+  knowledgeBaseId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project         Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  knowledgeBase   KnowledgeBase?  @relation(fields: [knowledgeBaseId], references: [id], onDelete: SetNull)
+  messages        Message[]
+  fileUploads     FileUpload[]
+  fileReferences  FileConversationReference[]
+
+  @@index([userId, projectId, createdAt])
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  userId    String
+  icon      String
+  iconColor String
+  title     String
+  prompt    String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+
+  @@index([userId, createdAt])
+}
+
+model FileUpload {
+  id             String   @id @default(cuid())
+  userId         String
+  originalName   String
+  mimeType       String
+  size           Int
+  storageKey     String   @unique
+  storageUrl     String
+  kind                String   @default("file")
+  source              String   @default("upload")
+  textContent         String?
+  visionDescription   String?
+  processingStatus    String   @default("completed")
+  createdAt           DateTime @default(now())
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  conversationId String?
+  message        Message?     @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  messageId      String?
+  chunks         FileChunk[]
+  conversationDraft ConversationDraft?
+  conversationReferences FileConversationReference[]
+
+  @@index([userId, kind, createdAt])
+  @@index([userId, storageKey])
+}
+
+model FileConversationReference {
+  id             String   @id @default(cuid())
+  fileUploadId   String
+  conversationId String
+  messageId      String?
+  createdAt      DateTime @default(now())
+
+  fileUpload     FileUpload   @relation(fields: [fileUploadId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  message        Message?     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([fileUploadId, createdAt])
+  @@index([conversationId, messageId])
+  @@index([messageId])
+  @@unique([fileUploadId, conversationId, messageId])
+}
+
+model ConversationDraft {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  knowledgeBaseId String?
+  fileUploadId    String?  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  knowledgeBase KnowledgeBase? @relation(fields: [knowledgeBaseId], references: [id], onDelete: SetNull)
+  fileUpload    FileUpload?    @relation(fields: [fileUploadId], references: [id], onDelete: SetNull)
+
+  @@index([knowledgeBaseId])
+}
+
+model FileChunk {
+  id        String   @id @default(cuid())
+  fileId    String
+  index     Int
+  content   String
+  embedding Unsupported("vector(1024)")?
+  createdAt DateTime @default(now())
+
+  file      FileUpload @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([fileId])
+}
+
+model KnowledgeBase {
+  id               String              @id @default(cuid())
+  userId           String
+  title            String
+  content          String
+  attachmentName   String?
+  attachmentMimeType String?
+  attachmentSize   Int?
+  storageKey       String?             @unique
+  storageUrl       String?
+  indexingContent  String?
+  processingStatus KnowledgeBaseStatus @default(queued)
+  processingError  String?
+  visibility       KnowledgeBaseVisibility @default(private)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks           KnowledgeBaseChunk[]
+  members          KnowledgeBaseMember[]
+  invitations      KnowledgeBaseInvitation[]
+  messages         Message[]
+  conversations    Conversation[]
+  conversationDrafts ConversationDraft[]
+
+  @@index([userId, processingStatus])
+  @@index([userId, createdAt])
+}
+
+model KnowledgeBaseChunk {
+  id              String   @id @default(cuid())
+  knowledgeBaseId String
+  index           Int
+  content         String
+  embedding       Unsupported("vector(1024)")?
+  createdAt       DateTime @default(now())
+
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeBaseId])
+}
+
+model KnowledgeBaseMember {
+  id              String   @id @default(cuid())
+  knowledgeBaseId String
+  userId          String
+  createdAt       DateTime @default(now())
+
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([knowledgeBaseId, userId])
+  @@index([userId])
+}
+
+model KnowledgeBaseInvitation {
+  id              String   @id @default(cuid())
+  knowledgeBaseId String
+  inviterId       String
+  inviteeId       String
+  createdAt       DateTime @default(now())
+
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  inviter         User          @relation("KnowledgeBaseInvitationInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee         User          @relation("KnowledgeBaseInvitationInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@unique([knowledgeBaseId, inviteeId])
+  @@index([inviteeId, createdAt])
+  @@index([inviterId])
+}
+
+model Message {
+  id              String        @id @default(cuid())
+  conversationId  String
+  knowledgeBaseId String?
+  role            MessageRole
+  content         String
+  deepThinkingEnabled Boolean   @default(false)
+  reasoningContent String       @default("")
+  status          MessageStatus @default(completed)
+  type            String        @default("text")
+  fileList        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  knowledgeBase   KnowledgeBase? @relation(fields: [knowledgeBaseId], references: [id], onDelete: SetNull)
+  files           FileUpload[]
+  fileReferences  FileConversationReference[]
+
+  @@index([conversationId, type, createdAt])
+}
+
+model Memory {
+  id         String      @id @default(cuid())
+  userId     String
+  type       MemoryType
+  key        String
+  content    String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
+}
+
+enum UserType {
+  registered
+  guest
+}
+
+enum MessageStatus {
+  generating
+  completed
+  cancelled
+  failed
+}
+
+enum MemoryType {
+  profile
+  preference
+  summary
+  fact
+}
+
+enum KnowledgeBaseStatus {
+  queued
+  processing
+  completed
+  failed
+}
+
+enum KnowledgeBaseVisibility {
+  private
+  team
+}
+
+enum AiModelType {
+  chat
+  embedding
+  vision
+  speech
+  image
+}
