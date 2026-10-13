@@ -43,8 +43,8 @@ test('mobile switches between copy and graph while sharing layer state', () => {
 test('module details expose representative capabilities and source files', () => {
   assert.match(source, /selectedCapabilities/)
   assert.match(source, /selectedParent/)
-  assert.ok(source.includes("t('ui.backToParentModule')"))
-  assert.ok(source.includes("t('ui.keyFiles')"))
+  assert.match(source, /返回所属模块/)
+  assert.match(source, /关键文件/)
   assert.match(styles, /\.architecture-graph-node--capability/)
 })
 

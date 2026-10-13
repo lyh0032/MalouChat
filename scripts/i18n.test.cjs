@@ -175,28 +175,6 @@ test('real i18next handles live language changes, plurals, interpolation, and Ch
   assert.equal(i18n.t('test.fallback'), '回退')
 })
 
-test('architecture labels and details translate while graph IDs and file paths remain unchanged', async () => {
-  const i18n = i18next.createInstance()
-  await i18n.init({ lng: 'en-US', resources: { 'en-US': { architecture: en.architecture } } })
-  const { localizeArchitecture } = loadTs('web/src/i18n/architecture.ts', { './index': i18n })
-  const graph = require('../web/src/generated/architecture-graph.json')
-  const localized = localizeArchitecture(graph)
-  assert.equal(localized.title, 'MalouChat Architecture')
-  for (let index = 0; index < graph.nodes.length; index++) {
-    assert.equal(localized.nodes[index].id, graph.nodes[index].id)
-    assert.deepEqual(
-      JSON.parse(JSON.stringify(localized.nodes[index].files)),
-      graph.nodes[index].files
-    )
-    assert.doesNotMatch(
-      localized.nodes[index].label +
-        localized.nodes[index].summary +
-        localized.nodes[index].details,
-      /[\u3400-\u9fff]/u
-    )
-  }
-})
-
 test('anonymous selection is local; existing account and restored sessions override it', async () => {
   const h = createHarness()
   await h.state().setLanguage('en-US')

@@ -18,8 +18,8 @@ function storedLanguage(): UiLanguage {
 }
 void i18n.use(initReactI18next).init({
   resources: {
-    'zh-CN': { translation: zhCN, architecture: zhCN.architecture },
-    'en-US': { translation: enUS, architecture: enUS.architecture }
+    'zh-CN': { translation: zhCN },
+    'en-US': { translation: enUS }
   },
   lng: storedLanguage(),
   fallbackLng: 'zh-CN',
