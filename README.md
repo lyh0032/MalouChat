@@ -1,5 +1,7 @@
 # MalouChat
 
+[在线体验 Demo](https://web-production-553de.up.railway.app/)
+
 一个可自部署的全栈 **AI Chat / Chatbot / 对话机器人 / 智能助手**。MalouChat 不只是基础聊天界面，还集成了流式对话、深度思考、联网搜索、图片理解与生成、文件解析、RAG 知识库、长期记忆、语音输入和工具调用等能力。
 
 项目采用 React 19 + Express + Prisma + PostgreSQL 构建，适合用来学习或二次开发个人 AI 助手、企业知识库问答、智能客服和 Agent 应用。
