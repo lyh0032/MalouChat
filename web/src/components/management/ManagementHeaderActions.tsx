@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { PlusOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 
@@ -8,10 +10,11 @@ type ManagementHeaderActionsProps = {
 }
 
 export default function ManagementHeaderActions({ onCreate }: ManagementHeaderActionsProps) {
+  useTranslation()
   return (
     <div className="management-header-actions">
       <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
-        新建
+        {t('ui.new')}
       </Button>
     </div>
   )

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { App as AntApp, Button, Dropdown, Input } from 'antd'
 import type { MenuProps } from 'antd'
@@ -106,13 +108,15 @@ function matches(file: File, tokens: string[]) {
 }
 
 function validateFile(file: File) {
-  if (file.size <= 0) return '文件内容为空，无法上传'
-  if (file.size > MAX_UPLOAD_SIZE) return '文件大小不能超过 20MB'
-  if (!matches(file, [...documentTokens, ...imageTokens])) return '暂不支持上传该文件格式'
+  if (file.size <= 0) return t('ui.emptyFilesCannotBeUploaded')
+  if (file.size > MAX_UPLOAD_SIZE) return t('ui.filesMustBe20MbOrSmaller')
+  if (!matches(file, [...documentTokens, ...imageTokens]))
+    return t('ui.thisFileFormatIsNotSupported')
   return ''
 }
 
 export default function MessageComposer(props: Props) {
+  useTranslation()
   const { message } = AntApp.useApp()
   const isMobile = useMobile(640)
   const knowledgeBases = useKnowledgeBaseStore((state) => state.knowledgeBases)
@@ -232,13 +236,17 @@ export default function MessageComposer(props: Props) {
     } catch {
       setDraftKnowledgeBaseId('')
       clearKnowledgeBase()
-      void message.error('知识库关联失败，请重试')
+      void message.error(t('ui.failedToLinkTheKnowledgeBasePleaseTryAgain'))
     }
   }
 
   async function uploadSelected(file: File) {
     if (files.length || uploading) {
-      void message.warning(uploading ? '已有文件正在上传，请稍候' : '当前已添加一个附件，请先移除')
+      void message.warning(
+        uploading
+          ? t('ui.aFileIsUploadingPleaseWait')
+          : t('ui.removeTheCurrentAttachmentBeforeAddingAnother')
+      )
       return
     }
     const error = validateFile(file)
@@ -263,7 +271,7 @@ export default function MessageComposer(props: Props) {
       setFiles([uploaded])
     } catch (error) {
       if (!(error instanceof DOMException && error.name === 'AbortError'))
-        void message.error(`文件 ${file.name} 上传失败`)
+        void message.error(t('ui.failedToUploadValue', { v0: file.name }))
     } finally {
       setUploading(null)
       setUploadProgress(0)
@@ -283,7 +291,7 @@ export default function MessageComposer(props: Props) {
       releaseLocalFilePreview(file)
       setFiles([])
     } catch {
-      void message.error('删除文件失败')
+      void message.error(t('ui.failedToDeleteTheFile'))
     } finally {
       setDeleting(false)
     }
@@ -311,7 +319,7 @@ export default function MessageComposer(props: Props) {
     if (!pasted.length) return
     event.preventDefault()
     if (files.length || uploading) {
-      void message.warning('当前已有附件，请先移除后再粘贴')
+      void message.warning(t('ui.removeTheCurrentAttachmentBeforePastingAnother'))
       return
     }
     const supported = pasted.find((file) => !validateFile(file))
@@ -319,7 +327,8 @@ export default function MessageComposer(props: Props) {
       void message.warning(validateFile(pasted[0]))
       return
     }
-    if (pasted.length > 1) void message.info('每次只能添加一个附件，已选择第一个支持的文件')
+    if (pasted.length > 1)
+      void message.info(t('ui.onlyOneAttachmentIsAllowedTheFirstSupportedFileWasSelected'))
     void uploadSelected(supported)
   }
 
@@ -330,7 +339,7 @@ export default function MessageComposer(props: Props) {
       return
     }
     if (!navigator.mediaDevices?.getUserMedia) {
-      void message.warning('当前浏览器不支持录音')
+      void message.warning(t('ui.yourBrowserDoesNotSupportAudioRecording'))
       return
     }
     try {
@@ -363,7 +372,7 @@ export default function MessageComposer(props: Props) {
       recorder.start(250)
       setRecording(true)
     } catch {
-      void message.error('无法访问麦克风，请允许麦克风权限')
+      void message.error(t('ui.unableToAccessTheMicrophonePleaseAllowMicrophoneAccess'))
     }
   }
 
@@ -385,19 +394,19 @@ export default function MessageComposer(props: Props) {
         ? [
             {
               key: 'camera',
-              label: '相机',
+              label: t('ui.camera'),
               icon: <CameraOutlined />,
               disabled: attachmentUnavailable
             },
             {
               key: 'gallery',
-              label: '图库',
+              label: t('ui.photoLibrary'),
               icon: <PictureOutlined />,
               disabled: attachmentUnavailable
             },
             {
               key: 'file',
-              label: '文件',
+              label: t('ui.files'),
               icon: <FileOutlined />,
               disabled: attachmentUnavailable
             }
@@ -405,14 +414,14 @@ export default function MessageComposer(props: Props) {
         : [
             {
               key: 'upload',
-              label: '上传图片或文件',
+              label: t('ui.uploadAnImageOrFile'),
               icon: <UploadOutlined />,
               disabled: attachmentUnavailable
             }
           ]),
       {
         key: 'library',
-        label: '从资料库添加',
+        label: t('ui.addFromLibrary'),
         icon: <FolderOpenOutlined />,
         disabled: attachmentUnavailable
       },
@@ -421,7 +430,7 @@ export default function MessageComposer(props: Props) {
             { type: 'divider' as const },
             {
               key: 'knowledge-bases',
-              label: '选择知识库',
+              label: t('ui.selectAKnowledgeBase'),
               icon: <DatabaseOutlined />,
               children: availableKnowledgeBases.map((kb) => ({
                 key: `knowledge-base:${kb.id}`,
@@ -472,7 +481,9 @@ export default function MessageComposer(props: Props) {
         className="composer-input"
         value={content}
         autoSize={{ minRows: 2, maxRows: 5 }}
-        placeholder={isMobile ? '输入问题...' : '请输入内容，回车发送，Shift + 回车换行'}
+        placeholder={
+          isMobile ? t('ui.askAQuestion') : t('ui.typeAMessageEnterToSendShiftEnterForANew')
+        }
         onChange={(event) => setContent(event.target.value)}
         onPaste={handlePaste}
         onKeyDown={(event) => {
@@ -483,7 +494,11 @@ export default function MessageComposer(props: Props) {
         }}
       />
       <div className="composer-status">
-        {recording ? `正在录音 ${minutes}:${seconds}` : transcribing ? '正在识别语音...' : ''}
+        {recording
+          ? t('ui.recordingValueValue', { v0: minutes, v1: seconds })
+          : transcribing
+            ? t('ui.transcribingAudio')
+            : ''}
       </div>
       <div className="composer-actions">
         <div className="composer-actions-left">
@@ -492,7 +507,7 @@ export default function MessageComposer(props: Props) {
               className="composer-icon-button"
               shape="circle"
               icon={<PlusOutlined />}
-              aria-label="添加附件或知识库"
+              aria-label={t('ui.addAnAttachmentOrKnowledgeBase')}
             />
           </Dropdown>
           {selectedKnowledgeBase ? (
@@ -503,7 +518,7 @@ export default function MessageComposer(props: Props) {
                 type="text"
                 size="small"
                 icon={<CloseOutlined />}
-                aria-label="移除知识库"
+                aria-label={t('ui.removeKnowledgeBase')}
                 onClick={() => void selectKb('__clear__')}
               />
             </div>
@@ -515,15 +530,15 @@ export default function MessageComposer(props: Props) {
             disabled={props.loading}
             onClick={() => setDeepThinking((value) => !value)}
           >
-            深度思考
+            {t('ui.deepThinking')}
           </Button>
         </div>
         <div className="composer-actions-right">
-          <span className="composer-hint">Shift + Enter 换行</span>
+          <span className="composer-hint">{t('ui.shiftEnterForANewLine')}</span>
           <Button
             shape="circle"
             icon={<AudioOutlined />}
-            aria-label={recording ? '停止录音' : '开始录音'}
+            aria-label={recording ? t('ui.stopRecording') : t('ui.startRecording')}
             disabled={props.loading}
             danger={recording}
             onClick={() => void toggleRecording()}
@@ -533,7 +548,7 @@ export default function MessageComposer(props: Props) {
               danger
               shape="circle"
               icon={<PauseOutlined />}
-              aria-label="停止生成"
+              aria-label={t('ui.stopGenerating')}
               onClick={props.onCancel}
             />
           ) : (
@@ -541,7 +556,7 @@ export default function MessageComposer(props: Props) {
               type="primary"
               shape="circle"
               icon={<SendOutlined />}
-              aria-label="发送"
+              aria-label={t('ui.send')}
               disabled={!content.trim() || props.loading || Boolean(uploading)}
               onClick={submit}
             />

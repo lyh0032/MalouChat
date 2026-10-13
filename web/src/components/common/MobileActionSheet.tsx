@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useEffect, type ReactNode } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { createPortal } from 'react-dom'
@@ -12,6 +14,7 @@ type Props = {
 }
 
 export default function MobileActionSheet({ open, title, children, onClose }: Props) {
+  useTranslation()
   useEffect(() => {
     if (!open) return
     const previousOverflow = document.body.style.overflow
@@ -39,11 +42,11 @@ export default function MobileActionSheet({ open, title, children, onClose }: Pr
         className="mobile-action-sheet"
         role="dialog"
         aria-modal="true"
-        aria-label="操作菜单"
+        aria-label={t('ui.actions')}
       >
         <header>
           <h3>{title}</h3>
-          <button type="button" aria-label="关闭" onClick={onClose}>
+          <button type="button" aria-label={t('ui.close')} onClick={onClose}>
             <CloseOutlined />
           </button>
         </header>

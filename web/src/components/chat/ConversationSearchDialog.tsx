@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useMemo, useState } from 'react'
 import { Empty, Input, Modal } from 'antd'
 import type { ConversationSummary } from '../../types/chat'
@@ -14,6 +16,7 @@ export default function ConversationSearchDialog({
   onClose: () => void
   onSelect: (id: string) => void
 }) {
+  useTranslation()
   const [keyword, setKeyword] = useState('')
   const results = useMemo(() => {
     const query = keyword.trim().toLowerCase()
@@ -25,8 +28,9 @@ export default function ConversationSearchDialog({
   }, [conversations, keyword])
   return (
     <Modal
+      closable={{ 'aria-label': t('ui.close') }}
       open={open}
-      title="搜索对话"
+      title={t('ui.searchChats')}
       width={540}
       centered
       footer={null}
@@ -40,7 +44,7 @@ export default function ConversationSearchDialog({
           autoFocus
           allowClear
           value={keyword}
-          placeholder="输入标题或消息内容"
+          placeholder={t('ui.searchTitlesOrMessages')}
           onChange={(event) => setKeyword(event.target.value)}
         />
         <div className="conversation-search-results">
@@ -48,11 +52,14 @@ export default function ConversationSearchDialog({
             results.map((item) => (
               <button key={item.id} type="button" onClick={() => onSelect(item.id)}>
                 <strong>{item.title}</strong>
-                <span>{item.lastMessagePreview || '暂无消息'}</span>
+                <span>{item.lastMessagePreview || t('ui.noMessagesYet')}</span>
               </button>
             ))
           ) : (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="没有匹配的会话" />
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={t('ui.noMatchingConversations')}
+            />
           )}
         </div>
       </div>

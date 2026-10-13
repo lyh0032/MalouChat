@@ -1,9 +1,10 @@
+import { t } from '../../i18n'
 import { useEffect, useRef } from 'react'
 import { subscribeThinkingOrb } from '../../utils/thinking-orb-clock'
 
 export default function ThinkingOrb({
   size = 20,
-  label = 'AI 正在思考'
+  label = t('ui.aiIsThinking')
 }: {
   size?: number
   label?: string

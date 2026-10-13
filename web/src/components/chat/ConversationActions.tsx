@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useMemo, useState } from 'react'
 import { App as AntApp, Button, Dropdown, Input, Modal, Select } from 'antd'
 import type { MenuProps } from 'antd'
@@ -33,6 +35,7 @@ export default function ConversationActions({
   onDelete,
   onMove
 }: Props) {
+  useTranslation()
   const { modal } = AntApp.useApp()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
@@ -64,22 +67,24 @@ export default function ConversationActions({
   function confirmDelete() {
     closeActions()
     modal.confirm({
-      title: '删除会话',
-      content: '确定要删除这个会话吗？',
-      okText: '删除',
-      cancelText: '取消',
+      title: t('ui.deleteConversation'),
+      content: t('ui.deleteThisConversation'),
+      okText: t('ui.delete'),
+      cancelText: t('ui.cancel'),
       okButtonProps: { danger: true },
       onOk: () => onDelete(conversation.id)
     })
   }
 
   const menuItems: MenuProps['items'] = [
-    { key: 'pin', label: conversation.isPinned ? '取消置顶' : '置顶' },
-    { key: 'rename', label: '重命名' },
-    ...(conversation.projectId ? [{ key: 'remove-project', label: '移出项目' }] : []),
-    ...(availableProjects.length ? [{ key: 'move', label: '加入项目' }] : []),
+    { key: 'pin', label: conversation.isPinned ? t('ui.unpin') : t('ui.pin') },
+    { key: 'rename', label: t('ui.rename') },
+    ...(conversation.projectId
+      ? [{ key: 'remove-project', label: t('ui.removeFromProject') }]
+      : []),
+    ...(availableProjects.length ? [{ key: 'move', label: t('ui.moveToProject') }] : []),
     { type: 'divider' },
-    { key: 'delete', label: '删除', danger: true }
+    { key: 'delete', label: t('ui.delete'), danger: true }
   ]
 
   function action(key: string) {
@@ -98,7 +103,7 @@ export default function ConversationActions({
           type="text"
           size="small"
           icon={<MoreOutlined />}
-          aria-label="更多会话操作"
+          aria-label={t('ui.moreConversationActions')}
           onClick={(event) => {
             event.stopPropagation()
             setSheetOpen(true)
@@ -121,7 +126,7 @@ export default function ConversationActions({
             type="text"
             size="small"
             icon={<MoreOutlined />}
-            aria-label="更多会话操作"
+            aria-label={t('ui.moreConversationActions')}
             onClick={(event) => event.stopPropagation()}
           />
         </Dropdown>
@@ -133,10 +138,10 @@ export default function ConversationActions({
         onClose={() => setSheetOpen(false)}
       >
         <MobileActionSheetItem icon={<IconParkPin />} onClick={togglePin}>
-          {conversation.isPinned ? '取消置顶' : '置顶'}
+          {conversation.isPinned ? t('ui.unpin') : t('ui.pin')}
         </MobileActionSheetItem>
         <MobileActionSheetItem icon={<EditOutlined />} onClick={startRename}>
-          重命名
+          {t('ui.rename')}
         </MobileActionSheetItem>
         {conversation.projectId ? (
           <MobileActionSheetItem
@@ -146,26 +151,27 @@ export default function ConversationActions({
               onMove(conversation.id, null)
             }}
           >
-            移出项目
+            {t('ui.removeFromProject')}
           </MobileActionSheetItem>
         ) : null}
         {availableProjects.length ? (
           <MobileActionSheetItem icon={<FolderAddOutlined />} onClick={startMove}>
-            加入项目
+            {t('ui.moveToProject')}
           </MobileActionSheetItem>
         ) : null}
         <MobileActionSheetItem danger icon={<DeleteOutlined />} onClick={confirmDelete}>
-          删除
+          {t('ui.delete')}
         </MobileActionSheetItem>
       </MobileActionSheet>
 
       <Modal
+        closable={{ 'aria-label': t('ui.close') }}
         open={renameOpen}
-        title="重命名会话"
+        title={t('ui.renameConversation')}
         width={380}
         centered
-        okText="确定"
-        cancelText="取消"
+        okText={t('ui.confirm')}
+        cancelText={t('ui.cancel')}
         okButtonProps={{ disabled: !renameTitle.trim() }}
         onOk={() => {
           onRename(conversation.id, renameTitle.trim())
@@ -177,7 +183,7 @@ export default function ConversationActions({
           autoFocus
           value={renameTitle}
           maxLength={80}
-          placeholder="请输入会话名称"
+          placeholder={t('ui.enterAConversationName')}
           onChange={(event) => setRenameTitle(event.target.value)}
           onPressEnter={() => {
             if (renameTitle.trim()) {
@@ -188,12 +194,13 @@ export default function ConversationActions({
         />
       </Modal>
       <Modal
+        closable={{ 'aria-label': t('ui.close') }}
         open={moveOpen}
-        title="加入项目"
+        title={t('ui.moveToProject')}
         width={380}
         centered
-        okText="确定"
-        cancelText="取消"
+        okText={t('ui.confirm')}
+        cancelText={t('ui.cancel')}
         okButtonProps={{ disabled: !targetProjectId }}
         onOk={() => {
           if (targetProjectId) onMove(conversation.id, targetProjectId)

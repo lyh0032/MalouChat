@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js/lib/core'
 import bash from 'highlight.js/lib/languages/bash'
@@ -58,7 +59,7 @@ const markdownIt = new MarkdownIt({
     const highlighted = langValid
       ? hljs.highlight(str, { language: lang, ignoreIllegals: true }).value
       : markdownIt.utils.escapeHtml(str)
-    return `<pre class="code-block"><div class="code-block-header">${langLabel}<button class="code-block-copy" type="button">复制</button></div><code${lang ? ` class="hljs language-${lang}"` : ' class="hljs"'}>${highlighted}</code></pre>`
+    return `<pre class="code-block"><div class="code-block-header">${langLabel}<button class="code-block-copy" type="button">${t('ui.copy')}</button></div><code${lang ? ` class="hljs language-${lang}"` : ' class="hljs"'}>${highlighted}</code></pre>`
   }
 })
 
@@ -150,7 +151,10 @@ export function markdownToPlainText(md: string): string {
     }
   }
 
-  return parts.join('').replace(/\n{3,}/g, '\n\n').trim()
+  return parts
+    .join('')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }
 
 function extractInlineText(token: any): string {

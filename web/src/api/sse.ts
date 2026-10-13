@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 export type SseEvent = {
   event: string
   data: unknown
@@ -49,7 +50,7 @@ function parseSseEvent(chunk: string): SseEvent | null {
       data: dataText ? JSON.parse(dataText) : null
     }
   } catch {
-    throw new Error(`无法解析 SSE 事件“${event}”的数据`)
+    throw new Error(t('ui.unableToParseDataForSseEventValue', { v0: event }))
   }
 }
 
@@ -58,12 +59,12 @@ export async function consumeSseStream(
   onEvent: (event: SseEvent) => void
 ): Promise<void> {
   if (!response.body) {
-    throw new Error('流式响应体为空')
+    throw new Error(t('ui.theStreamingResponseIsEmpty'))
   }
 
   const contentType = response.headers.get('content-type') ?? ''
   if (!contentType.toLowerCase().includes('text/event-stream')) {
-    throw new Error('流式响应类型无效')
+    throw new Error(t('ui.invalidStreamingResponseType'))
   }
 
   const reader = response.body.getReader()

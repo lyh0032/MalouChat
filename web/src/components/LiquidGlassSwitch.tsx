@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import type { ComponentType, CSSProperties } from 'react'
 
 import './LiquidGlassSwitch.css'
@@ -23,7 +24,7 @@ export default function LiquidGlassSwitch<T extends string>({
   value,
   options,
   onChange,
-  ariaLabel = '选项切换',
+  ariaLabel = t('ui.switchOptions'),
   size = 'md',
   hideLabelsOnMobile = false,
   className = ''

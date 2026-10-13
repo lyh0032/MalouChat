@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useEffect } from 'react'
 import { Form, Input, InputNumber, Modal, Switch } from 'antd'
 
@@ -50,14 +52,6 @@ function initialInput(
   }
 }
 
-const typeLabels: Record<AiModelType, string> = {
-  chat: '对话模型',
-  embedding: '向量模型',
-  vision: '多模态模型',
-  speech: '语音模型',
-  image: '文生图模型'
-}
-
 export default function AdminModelModal({
   open,
   loading,
@@ -67,6 +61,15 @@ export default function AdminModelModal({
   onClose,
   onSubmit
 }: Props) {
+  const typeLabels: Record<AiModelType, string> = {
+    chat: t('ui.chatModel'),
+    embedding: t('ui.embeddingModel'),
+    vision: t('ui.visionModel'),
+    speech: t('ui.speechModel'),
+    image: t('ui.imageGenerationModel')
+  }
+
+  useTranslation()
   const [form] = Form.useForm<AiModelInput>()
 
   useEffect(() => {
@@ -96,15 +99,20 @@ export default function AdminModelModal({
 
   return (
     <Modal
+      closable={{ 'aria-label': t('ui.close') }}
       open={open}
       title={
-        type === 'chat' ? (model ? '编辑对话模型' : '添加对话模型') : `配置${typeLabels[type]}`
+        type === 'chat'
+          ? model
+            ? t('ui.editChatModel')
+            : t('ui.addChatModel')
+          : t('ui.configureValue', { v0: typeLabels[type] })
       }
       width={620}
       centered
       mask={{ closable: false }}
-      okText="保存配置"
-      cancelText="取消"
+      okText={t('ui.saveConfiguration')}
+      cancelText={t('ui.cancel')}
       confirmLoading={loading}
       onOk={() => void submit()}
       onCancel={onClose}
@@ -114,38 +122,40 @@ export default function AdminModelModal({
         <div className="admin-model-form-grid">
           <Form.Item
             name="displayName"
-            label="显示名称"
-            rules={[{ required: true, whitespace: true, message: '请输入显示名称' }]}
+            label={t('ui.displayName')}
+            rules={[{ required: true, whitespace: true, message: t('ui.enterADisplayName') }]}
           >
-            <Input maxLength={80} placeholder="例如 Qwen 3.7 Plus" />
+            <Input maxLength={80} placeholder={t('ui.eGQwen37Plus')} />
           </Form.Item>
           <Form.Item
             name="code"
-            label="模型标识"
-            rules={[{ required: true, whitespace: true, message: '请输入模型标识' }]}
+            label={t('ui.modelIdentifier')}
+            rules={[{ required: true, whitespace: true, message: t('ui.enterAModelIdentifier') }]}
           >
-            <Input maxLength={120} placeholder="例如 qwen3.7-plus" />
+            <Input maxLength={120} placeholder={t('ui.eGQwen37Plus2')} />
           </Form.Item>
         </div>
-        <Form.Item name="description" label="模型说明">
+        <Form.Item name="description" label={t('ui.modelDescription')}>
           <Input.TextArea
             rows={3}
             maxLength={300}
             showCount
-            placeholder="简要说明模型的用途或特性"
+            placeholder={t('ui.brieflyDescribeTheModelSPurposeOrFeatures')}
           />
         </Form.Item>
 
         {type === 'chat' ? (
           <div className="admin-model-form-grid">
-            <Form.Item name="sortOrder" label="显示顺序">
+            <Form.Item name="sortOrder" label={t('ui.displayOrder')}>
               <InputNumber min={0} max={9999} />
             </Form.Item>
             <div className="admin-model-switch-row">
               <span>
-                <strong>默认模型</strong>
+                <strong>{t('ui.defaultModel')}</strong>
                 <small>
-                  {model?.isDefault ? '当前模型已经是默认模型' : '新用户或无有效偏好时使用'}
+                  {model?.isDefault
+                    ? t('ui.thisIsAlreadyTheDefaultModel')
+                    : t('ui.usedForNewUsersOrWhenNoValidPreferenceIsSet')}
                 </small>
               </span>
               <Form.Item name="isDefault" valuePropName="checked" noStyle>
@@ -158,8 +168,8 @@ export default function AdminModelModal({
         {type === 'embedding' ? (
           <Form.Item
             name="dimensions"
-            label="向量维度"
-            extra="当前 pgvector 数据结构固定为 1024 维。"
+            label={t('ui.embeddingDimensions')}
+            extra={t('ui.theCurrentPgvectorSchemaRequires1024Dimensions')}
           >
             <InputNumber min={1024} max={1024} disabled />
           </Form.Item>
@@ -168,27 +178,27 @@ export default function AdminModelModal({
         {type === 'image' ? (
           <div className="admin-image-settings">
             <div>
-              <strong>生成参数</strong>
-              <p>参数会和模型标识一起保存到数据库。</p>
+              <strong>{t('ui.generationParameters')}</strong>
+              <p>{t('ui.parametersAreSavedAlongsideTheModelIdentifier')}</p>
             </div>
             <Form.Item
               name={['settings', 'size']}
-              label="默认图片尺寸"
+              label={t('ui.defaultImageSize')}
               rules={[
                 { required: true },
-                { pattern: /^\d+\*\d+$/, message: '请按 1024*1024 格式填写' }
+                { pattern: /^\d+\*\d+$/, message: t('ui.useTheFormat10241024') }
               ]}
             >
               <Input placeholder="1024*1024" />
             </Form.Item>
             <label>
-              <span>提示词智能扩展</span>
+              <span>{t('ui.promptEnhancement')}</span>
               <Form.Item name={['settings', 'promptExtend']} valuePropName="checked" noStyle>
                 <Switch />
               </Form.Item>
             </label>
             <label>
-              <span>生成图片水印</span>
+              <span>{t('ui.imageWatermark')}</span>
               <Form.Item name={['settings', 'watermark']} valuePropName="checked" noStyle>
                 <Switch />
               </Form.Item>

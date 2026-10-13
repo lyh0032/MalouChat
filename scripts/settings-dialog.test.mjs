@@ -13,7 +13,7 @@ const styles = await readFile(
 
 test('architecture remains elevated while admin navigation lives in the sidebar', () => {
   assert.match(source, /onNavigate\('\/architecture'\)/)
-  assert.match(source, />\s*技术架构\s*<\/Button>/)
+  assert.ok(source.includes("t('ui.architecture')"))
   assert.doesNotMatch(source, /后台管理/)
   assert.doesNotMatch(source, /onNavigate\('\/admin'\)/)
   assert.match(source, /className="chat-settings-title-actions"/)

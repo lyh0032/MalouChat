@@ -85,3 +85,7 @@
     flex-basis: auto;
   }
 }
+
+.chat-settings-row > .ant-segmented .ant-segmented-item-label {
+  padding-inline: 6px;
+}

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { App as AntApp, Button, Empty, Spin, Tooltip } from 'antd'
 import {
@@ -38,38 +40,6 @@ import '../components/management/ManagementPageLayout.css'
 type SortableOptionsWithPointerSupport = Sortable.Options & { supportPointer?: boolean }
 type SpecializedType = Exclude<AiModelType, 'chat'>
 
-const specializedOptions: Array<{
-  type: SpecializedType
-  icon: React.ReactNode
-  title: string
-  description: string
-}> = [
-  {
-    type: 'embedding',
-    icon: <NodeIndexOutlined />,
-    title: '向量模型',
-    description: '负责文件、知识库的向量化和语义检索'
-  },
-  {
-    type: 'vision',
-    icon: <EyeOutlined />,
-    title: '多模态模型',
-    description: '负责图片理解、场景分析和 OCR'
-  },
-  {
-    type: 'speech',
-    icon: <AudioOutlined />,
-    title: '语音模型',
-    description: '负责录音内容的语音转文字'
-  },
-  {
-    type: 'image',
-    icon: <PictureOutlined />,
-    title: '文生图模型',
-    description: '负责根据提示词生成图片'
-  }
-]
-
 function modelToInput(model: AiModelRecord): AiModelInput {
   return {
     code: model.code,
@@ -87,6 +57,39 @@ function modelToInput(model: AiModelRecord): AiModelInput {
 }
 
 export default function AdminView() {
+  const specializedOptions: Array<{
+    type: SpecializedType
+    icon: React.ReactNode
+    title: string
+    description: string
+  }> = [
+    {
+      type: 'embedding',
+      icon: <NodeIndexOutlined />,
+      title: t('ui.embeddingModel'),
+      description: t('ui.embeddingsAndSemanticSearchForFilesAndKnowledgeBases')
+    },
+    {
+      type: 'vision',
+      icon: <EyeOutlined />,
+      title: t('ui.visionModel'),
+      description: t('ui.imageUnderstandingSceneAnalysisAndOcr')
+    },
+    {
+      type: 'speech',
+      icon: <AudioOutlined />,
+      title: t('ui.speechModel'),
+      description: t('ui.transcribesRecordedAudio')
+    },
+    {
+      type: 'image',
+      icon: <PictureOutlined />,
+      title: t('ui.imageGenerationModel'),
+      description: t('ui.generatesImagesFromPrompts')
+    }
+  ]
+
+  useTranslation()
   const navigate = useNavigate()
   const { message, modal } = AntApp.useApp()
   const isMobile = useMobile()
@@ -187,7 +190,7 @@ export default function AdminView() {
       const latestModels = useAdminModelStore.getState().models
       setModels([...latestModels.filter((model) => model.type !== 'chat'), ...saved])
       await loadModelPreferences(true)
-      void message.success('模型顺序已保存')
+      void message.success(t('ui.modelOrderSaved'))
     } catch (error) {
       await loadModels(true)
       throw error
@@ -218,7 +221,11 @@ export default function AdminView() {
       else await createAdminModel(input)
       setDialogType(null)
       await Promise.all([loadModels(true), loadModelPreferences(true)])
-      void message.success(input.type === 'chat' ? '对话模型已保存' : '专用模型配置已更新')
+      void message.success(
+        input.type === 'chat'
+          ? t('ui.chatModelSaved')
+          : t('ui.specializedModelConfigurationUpdated')
+      )
     } finally {
       setSubmitting(false)
     }
@@ -228,20 +235,25 @@ export default function AdminView() {
     if (model.isDefault) return
     await updateAdminModel(model.id, { ...modelToInput(model), isDefault: true })
     await Promise.all([loadModels(true), loadModelPreferences(true)])
-    void message.success(`「${model.displayName}」已设为默认模型`)
+    void message.success(t('ui.valueIsNowTheDefaultModel', { v0: model.displayName }))
   }
 
   function confirmApplyToAll(model: AiModelRecord) {
     modal.confirm({
-      title: '刷新全部用户模型',
-      content: `这会把所有用户当前选择的对话模型统一切换为「${model.displayName}」。确认继续吗？`,
-      okText: '确认刷新',
-      cancelText: '取消',
+      title: t('ui.resetTheModelForAllUsers'),
+      content: t('ui.thisWillSwitchEveryUserSChatModelToValueContinue', { v0: model.displayName }),
+      okText: t('ui.confirmReset'),
+      cancelText: t('ui.cancel'),
       async onOk() {
         setApplyingModelId(model.id)
         try {
           const result = await applyChatModelToAllUsers(model.id)
-          void message.success(`已将 ${result.updatedUserCount} 位用户切换到 ${result.displayName}`)
+          void message.success(
+            t('ui.switchedValueUsersToValue', {
+              v0: result.updatedUserCount,
+              v1: result.displayName
+            })
+          )
         } finally {
           setApplyingModelId('')
         }
@@ -251,19 +263,19 @@ export default function AdminView() {
 
   function confirmDelete(model: AiModelRecord) {
     if (model.isDefault) {
-      void message.warning('默认模型不能删除，请先设置另一个默认模型')
+      void message.warning(t('ui.chooseAnotherDefaultModelBeforeDeletingThisOne'))
       return
     }
     modal.confirm({
-      title: '删除对话模型',
-      content: `确认删除对话模型「${model.displayName}」吗？`,
-      okText: '删除',
-      cancelText: '取消',
+      title: t('ui.deleteChatModel'),
+      content: t('ui.deleteTheChatModelValue', { v0: model.displayName }),
+      okText: t('ui.delete'),
+      cancelText: t('ui.cancel'),
       okButtonProps: { danger: true },
       async onOk() {
         await deleteAdminModel(model.id)
         await Promise.all([loadModels(true), loadModelPreferences(true)])
-        void message.success('对话模型已删除')
+        void message.success(t('ui.chatModelDeleted'))
       }
     })
   }
@@ -283,8 +295,8 @@ export default function AdminView() {
       >
         <span className="admin-nav-number">01</span>
         <span>
-          <strong>对话模型</strong>
-          <small>多个可选，一个默认</small>
+          <strong>{t('ui.chatModel')}</strong>
+          <small>{t('ui.multipleChoicesOneDefault')}</small>
         </span>
       </a>
       <a
@@ -296,8 +308,8 @@ export default function AdminView() {
       >
         <span className="admin-nav-number">02</span>
         <span>
-          <strong>专用模型</strong>
-          <small>每项能力单独配置</small>
+          <strong>{t('ui.specializedModels')}</strong>
+          <small>{t('ui.separateConfigurationForEachCapability')}</small>
         </span>
       </a>
     </>
@@ -309,8 +321,8 @@ export default function AdminView() {
         isMobile={isMobile}
         isOpen={isSidebarOpen}
         activeItem="admin"
-        summaryTitle="模型管理"
-        summaryText="聊天模型与专用 AI 能力"
+        summaryTitle={t('ui.modelManagement')}
+        summaryText={t('ui.chatModelsAndSpecializedAiCapabilities')}
         icon={<ToolOutlined />}
         stats={sidebarNav}
         onClose={() => setSidebarOpen(false)}
@@ -321,9 +333,12 @@ export default function AdminView() {
         <header className="admin-header management-page-header">
           <div className="admin-header-main management-page-header-main">
             {isMobile ? (
-              <ManagementSidebarToggle label="打开侧边菜单" onClick={() => setSidebarOpen(true)} />
+              <ManagementSidebarToggle
+                label={t('ui.openSidebar')}
+                onClick={() => setSidebarOpen(true)}
+              />
             ) : null}
-            <h2>模型管理</h2>
+            <h2>{t('ui.modelManagement')}</h2>
           </div>
         </header>
 
@@ -332,13 +347,11 @@ export default function AdminView() {
             <section id="chat-models" className="model-section">
               <div className="section-heading">
                 <div>
-                  <h2>对话模型</h2>
-                  <p>
-                    可以配置多个供用户选择的模型，其中一个作为默认模型。拖动排序图标即可调整用户看到的顺序。
-                  </p>
+                  <h2>{t('ui.chatModel')}</h2>
+                  <p>{t('ui.configureMultipleModelsForUsersToChooseFromAndSetOne')}</p>
                 </div>
                 <Button type="primary" icon={<PlusOutlined />} onClick={openCreateChatModel}>
-                  添加对话模型
+                  {t('ui.addChatModel')}
                 </Button>
               </div>
 
@@ -354,8 +367,8 @@ export default function AdminView() {
                           className="chat-model-drag-handle"
                           type="button"
                           disabled={sortingChatModels}
-                          title="拖动排序"
-                          aria-label="拖动调整模型顺序"
+                          title={t('ui.reorder')}
+                          aria-label={t('ui.dragToReorderModels')}
                         >
                           <MenuOutlined />
                         </button>
@@ -365,7 +378,9 @@ export default function AdminView() {
                         <div className="chat-model-copy">
                           <div>
                             <h3>{model.displayName}</h3>
-                            {model.isDefault ? <span className="default-badge">默认</span> : null}
+                            {model.isDefault ? (
+                              <span className="default-badge">{t('ui.default')}</span>
+                            ) : null}
                           </div>
                           <code>{model.code}</code>
                           {model.description ? <p>{model.description}</p> : null}
@@ -374,7 +389,7 @@ export default function AdminView() {
                       <div className="chat-model-actions">
                         {!model.isDefault ? (
                           <Button type="text" size="small" onClick={() => void setDefault(model)}>
-                            设为默认
+                            {t('ui.setAsDefault')}
                           </Button>
                         ) : null}
                         <Button
@@ -382,22 +397,28 @@ export default function AdminView() {
                           loading={applyingModelId === model.id}
                           onClick={() => confirmApplyToAll(model)}
                         >
-                          刷新全部用户
+                          {t('ui.resetForAllUsers')}
                         </Button>
-                        <Tooltip title="编辑模型">
+                        <Tooltip title={t('ui.editModel')}>
                           <Button
                             shape="circle"
                             icon={<EditOutlined />}
-                            aria-label="编辑模型"
+                            aria-label={t('ui.editModel')}
                             onClick={() => openModel(model)}
                           />
                         </Tooltip>
-                        <Tooltip title={model.isDefault ? '默认模型不能删除' : '删除模型'}>
+                        <Tooltip
+                          title={
+                            model.isDefault
+                              ? t('ui.theDefaultModelCannotBeDeleted')
+                              : t('ui.deleteModel')
+                          }
+                        >
                           <Button
                             danger
                             shape="circle"
                             icon={<DeleteOutlined />}
-                            aria-label="删除模型"
+                            aria-label={t('ui.deleteModel')}
                             disabled={model.isDefault}
                             onClick={() => confirmDelete(model)}
                           />
@@ -408,9 +429,9 @@ export default function AdminView() {
                 </div>
               ) : !isLoading ? (
                 <div className="admin-section-empty">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="还没有对话模型">
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('ui.noChatModelsYet')}>
                     <Button type="primary" onClick={openCreateChatModel}>
-                      添加模型
+                      {t('ui.addModel')}
                     </Button>
                   </Empty>
                 </div>
@@ -420,8 +441,8 @@ export default function AdminView() {
             <section id="specialized-models" className="model-section">
               <div className="section-heading">
                 <div>
-                  <h2>专用模型</h2>
-                  <p>每项能力只使用一个模型，点击对应编辑按钮即可修改当前配置。</p>
+                  <h2>{t('ui.specializedModels')}</h2>
+                  <p>{t('ui.eachCapabilityUsesOneModelClickItsEditButtonToChange')}</p>
                 </div>
               </div>
               <div className="specialized-grid">
@@ -440,13 +461,13 @@ export default function AdminView() {
                         <Button
                           shape="circle"
                           icon={<EditOutlined />}
-                          aria-label={`编辑${option.title}`}
+                          aria-label={t('ui.editValue', { v0: option.title })}
                           onClick={() => openSpecialized(option.type)}
                         />
                       </div>
                       <div className="specialized-model-value">
-                        <span>当前模型</span>
-                        <strong>{model?.displayName || '暂未配置'}</strong>
+                        <span>{t('ui.currentModel')}</span>
+                        <strong>{model?.displayName || t('ui.notConfigured')}</strong>
                         {model ? <code>{model.code}</code> : null}
                       </div>
                     </article>

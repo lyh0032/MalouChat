@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t, translateSource, getUiLanguage } from '../../i18n'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import 'highlight.js/styles/github-dark-dimmed.css'
 import { App as AntApp, Button, Image, Input, Modal, Spin } from 'antd'
@@ -144,6 +146,7 @@ const promptCategoryIcons = {
 const PENDING_ASSISTANT_MESSAGE_ID = 'pending-assistant'
 
 export default function MessageList(props: Props) {
+  const { i18n: uiI18n } = useTranslation()
   const { message: toast, modal } = AntApp.useApp()
   const categoryStates = usePromptSuggestionsStore((state) => state.categoryStates)
   const suggestionBatchKey = usePromptSuggestionsStore((state) => state.batchKey)
@@ -190,7 +193,7 @@ export default function MessageList(props: Props) {
           .filter((item) => item.role === 'assistant')
           .map((item) => [item.id, renderMarkdownWithoutFileLinks(item.content, item.fileList)])
       ),
-    [props.messages]
+    [props.messages, uiI18n.language]
   )
 
   function messageImages(item: Message): ResolvedImageAsset[] {
@@ -210,11 +213,11 @@ export default function MessageList(props: Props) {
     event.stopPropagation()
     void navigator.clipboard.writeText(code).then(() => {
       const label = button.textContent
-      button.textContent = '已复制'
+      button.textContent = t('ui.copied')
       window.setTimeout(() => {
         button.textContent = label
       }, 1500)
-      void toast.success('代码已复制')
+      void toast.success(t('ui.codeCopied'))
     })
   }
 
@@ -238,7 +241,7 @@ export default function MessageList(props: Props) {
     try {
       setPreviewUrl(await imageUrl(image, 'preview', filename))
     } catch {
-      void toast.error('图片地址获取失败')
+      void toast.error(t('ui.failedToLoadTheImageUrl'))
     }
   }
 
@@ -246,16 +249,16 @@ export default function MessageList(props: Props) {
     try {
       download(await imageUrl(image, 'download', filename), filename)
     } catch {
-      void toast.error('图片地址获取失败')
+      void toast.error(t('ui.failedToLoadTheImageUrl'))
     }
   }
 
   function confirmDeleteMessage(item: Message) {
     modal.confirm({
-      title: '删除消息',
-      content: '确认删除这条消息吗？',
-      okText: '删除',
-      cancelText: '取消',
+      title: t('ui.deleteMessage'),
+      content: t('ui.deleteThisMessage'),
+      okText: t('ui.delete'),
+      cancelText: t('ui.cancel'),
       okButtonProps: { danger: true },
       onOk: () => props.onDelete(item.id)
     })
@@ -278,7 +281,7 @@ export default function MessageList(props: Props) {
 
   if (props.loading)
     return (
-      <div className="message-list message-list--skeleton" aria-label="正在加载消息">
+      <div className="message-list message-list--skeleton" aria-label={t('ui.loadingMessages')}>
         <div className="message-skeleton message-skeleton--user" aria-hidden="true">
           <div className="message-skeleton-bubble message-skeleton-bubble--user">
             <div className="message-skeleton-role">
@@ -316,10 +319,10 @@ export default function MessageList(props: Props) {
   if (!props.messages.length && !props.streaming)
     return (
       <div className="message-empty">
-        <h2>开始一段新对话</h2>
-        <p>选择一个问题快速开始，或者直接在下方输入。</p>
+        <h2>{t('ui.startANewConversation')}</h2>
+        <p>{t('ui.chooseAQuestionToGetStartedOrTypeYourOwnBelow')}</p>
         <div className="message-empty-heading">
-          <span>试试这些问题</span>
+          <span>{t('ui.tryTheseQuestions')}</span>
           <Button
             type="text"
             size="small"
@@ -327,7 +330,7 @@ export default function MessageList(props: Props) {
             disabled={Boolean(props.submittingPrompt) || suggestionTransition !== 'idle'}
             onClick={refreshPromptSuggestions}
           >
-            换一批
+            {t('ui.moreSuggestions')}
           </Button>
         </div>
         <div
@@ -350,13 +353,13 @@ export default function MessageList(props: Props) {
               }
               type="button"
               disabled={Boolean(props.submittingPrompt) || suggestionTransition !== 'idle'}
-              onClick={() => props.onPrompt(item.prompt)}
+              onClick={() => props.onPrompt(translateSource(item.prompt))}
             >
               <small>
                 <i>{promptCategoryIcons[item.id]}</i>
-                {item.label}
+                {translateSource(item.label)}
               </small>
-              <span>{item.prompt}</span>
+              <span>{translateSource(item.prompt)}</span>
               {props.submittingPrompt === item.prompt ? <Spin size="small" /> : null}
             </button>
           ))}
@@ -384,21 +387,24 @@ export default function MessageList(props: Props) {
                 {item.role === 'assistant' ? (
                   <MalouBrand compact name="Malou" />
                 ) : (
-                  <strong>你</strong>
+                  <strong>{t('ui.you')}</strong>
                 )}
-                <time>{new Date(item.createdAt).toLocaleString()}</time>
+                <time>{new Date(item.createdAt).toLocaleString(getUiLanguage())}</time>
               </header>
               {item.deepThinkingEnabled &&
               (item.reasoningContent || item.reasoningStatus === 'thinking') ? (
                 <details className="message-reasoning" open={item.reasoningStatus === 'thinking'}>
                   <summary>
-                    {item.reasoningStatus === 'thinking' ? '正在深度思考' : '已完成思考'}
+                    {item.reasoningStatus === 'thinking'
+                      ? t('ui.thinkingDeeply')
+                      : t('ui.thinkingComplete')}
                   </summary>
                   {item.reasoningContent ? (
                     <p>{item.reasoningContent}</p>
                   ) : (
                     <span>
-                      <ThinkingOrb size={18} /> 正在分析...
+                      <ThinkingOrb size={18} />
+                      {t('ui.analyzing')}
                     </span>
                   )}
                 </details>
@@ -435,8 +441,8 @@ export default function MessageList(props: Props) {
                   <ThinkingOrb />
                   <span>
                     {item.type === 'image'
-                      ? '正在生成图片...'
-                      : props.thinkingText || '正在思考...'}
+                      ? t('ui.generatingAnImage')
+                      : translateSource(props.thinkingText) || t('ui.thinking')}
                   </span>
                 </div>
               ) : null}
@@ -449,14 +455,14 @@ export default function MessageList(props: Props) {
                       type="text"
                       size="small"
                       icon={<EyeOutlined />}
-                      aria-label="预览图片"
+                      aria-label={t('ui.previewImage')}
                       onClick={() => void previewImage(image, imageFilename(item, image, index))}
                     />
                     <Button
                       type="text"
                       size="small"
                       icon={<DownloadOutlined />}
-                      aria-label="下载图片"
+                      aria-label={t('ui.downloadImage')}
                       onClick={() => void downloadImage(image, imageFilename(item, image, index))}
                     />
                   </Fragment>
@@ -466,12 +472,12 @@ export default function MessageList(props: Props) {
                   type="text"
                   size="small"
                   icon={<CopyOutlined />}
-                  aria-label="复制"
+                  aria-label={t('ui.copy')}
                   disabled={isPendingAssistant}
                   onClick={() =>
                     void navigator.clipboard
                       .writeText(markdownToPlainText(item.content))
-                      .then(() => toast.success('已复制'))
+                      .then(() => toast.success(t('ui.copied')))
                   }
                 />
               )}
@@ -480,7 +486,7 @@ export default function MessageList(props: Props) {
                   type="text"
                   size="small"
                   icon={<EditOutlined />}
-                  aria-label="编辑"
+                  aria-label={t('ui.edit')}
                   onClick={() => {
                     setEditing(item)
                     setEditContent(item.content)
@@ -493,7 +499,7 @@ export default function MessageList(props: Props) {
                   size="small"
                   disabled={props.locked}
                   icon={<DeleteOutlined />}
-                  aria-label="删除"
+                  aria-label={t('ui.delete')}
                   onClick={() => confirmDeleteMessage(item)}
                 />
               ) : null}
@@ -502,12 +508,13 @@ export default function MessageList(props: Props) {
         )
       })}
       <Modal
+        closable={{ 'aria-label': t('ui.close') }}
         open={Boolean(editing)}
-        title="编辑消息并重新生成"
+        title={t('ui.editMessageAndRegenerate')}
         width={560}
         centered
-        okText="重新生成"
-        cancelText="取消"
+        okText={t('ui.regenerate')}
+        cancelText={t('ui.cancel')}
         okButtonProps={{ disabled: !editContent.trim() }}
         onOk={() => {
           if (editing) props.onEdit(editing.id, editContent.trim())

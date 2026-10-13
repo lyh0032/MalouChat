@@ -1,6 +1,9 @@
+import { t } from './i18n'
 import { useEffect, useRef, useState } from 'react'
 import { App as AntApp, Button, ConfigProvider, Modal, Spin, theme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
+import enUS from 'antd/locale/en_US'
+import { useTranslation } from 'react-i18next'
 
 import AppRouter from './router/index'
 import {
@@ -40,6 +43,7 @@ function ToastBridge() {
 }
 
 function KnowledgeBaseInvitationManager() {
+  useTranslation()
   const { message } = AntApp.useApp()
   const userId = useAuthStore((state) => state.user?.id ?? '')
   const loadKnowledgeBases = useKnowledgeBaseStore((state) => state.loadKnowledgeBases)
@@ -72,10 +76,10 @@ function KnowledgeBaseInvitationManager() {
       if (action === 'accept') {
         await acceptKnowledgeBaseInvitation(id)
         await loadKnowledgeBases(true, true)
-        void message.success('已加入团队知识库')
+        void message.success(t('ui.joinedTheTeamKnowledgeBase'))
       } else {
         await rejectKnowledgeBaseInvitation(id)
-        void message.success('已拒绝邀请')
+        void message.success(t('ui.invitationDeclined'))
       }
       setInvitations((records) => records.filter((record) => record.id !== id))
     } finally {
@@ -85,8 +89,9 @@ function KnowledgeBaseInvitationManager() {
 
   return (
     <Modal
+      closable={{ 'aria-label': t('ui.close') }}
       open={Boolean(userId && invitations.length)}
-      title="知识库邀请"
+      title={t('ui.knowledgeBaseInvitations')}
       width={560}
       centered
       mask={{ closable: false }}
@@ -99,21 +104,24 @@ function KnowledgeBaseInvitationManager() {
             <article key={item.id} className="app-kb-invitation">
               <div>
                 <strong>{item.knowledgeBase.title}</strong>
-                <span>{item.inviter.username} 邀请你加入团队知识库</span>
+                <span>
+                  {item.inviter.username}
+                  {t('ui.invitesYouToJoinATeamKnowledgeBase')}
+                </span>
               </div>
               <div className="app-kb-invitation-actions">
                 <Button
                   loading={handlingId === item.id}
                   onClick={() => void handleInvitation(item.id, 'reject')}
                 >
-                  拒绝
+                  {t('ui.decline')}
                 </Button>
                 <Button
                   type="primary"
                   loading={handlingId === item.id}
                   onClick={() => void handleInvitation(item.id, 'accept')}
                 >
-                  同意
+                  {t('ui.accept')}
                 </Button>
               </div>
             </article>
@@ -125,12 +133,13 @@ function KnowledgeBaseInvitationManager() {
 }
 
 export default function App() {
+  const { i18n } = useTranslation()
   const resolvedMode = useThemeStore((state) => state.resolvedMode)
   const isDark = resolvedMode === 'dark'
 
   return (
     <ConfigProvider
-      locale={zhCN}
+      locale={i18n.language === 'en-US' ? enUS : zhCN}
       theme={{
         algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
         token: {

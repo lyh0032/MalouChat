@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { App as AntApp } from 'antd'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -26,6 +28,7 @@ import './ChatView.css'
 const DEEP_THINKING_STORAGE_KEY = 'my-agent:deep-thinking-enabled'
 
 export default function ChatView({ active = true }: { active?: boolean }) {
+  useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const params = useParams<{ projectId?: string; conversationId?: string }>()
@@ -87,7 +90,7 @@ export default function ChatView({ active = true }: { active?: boolean }) {
     ])
       .catch((error) => {
         console.error('Failed to initialize chat:', error)
-        void message.error('对话加载失败，请稍后重试')
+        void message.error(t('ui.failedToLoadTheConversationPleaseTryAgainLater'))
       })
       .finally(() => {
         if (active) setInitialLoading(false)
@@ -170,9 +173,7 @@ export default function ChatView({ active = true }: { active?: boolean }) {
 
   useEffect(() => {
     if (!creatingConversationRef.current || !chat.activeConversationId) return
-    const conversation = chat.conversations.find(
-      (item) => item.id === chat.activeConversationId
-    )
+    const conversation = chat.conversations.find((item) => item.id === chat.activeConversationId)
     if (!conversation) return
     void Promise.resolve(
       navigate(routeForConversation(conversation, conversation.id), { replace: true })
@@ -267,7 +268,7 @@ export default function ChatView({ active = true }: { active?: boolean }) {
     const updated = await chat.moveConversationToProject(id, projectId)
     if (chat.activeConversationId === id)
       await navigate(routeForConversation(updated, id), { replace: true })
-    void message.success(projectId ? '已加入项目' : '已移出项目')
+    void message.success(projectId ? t('ui.movedToProject') : t('ui.removedFromProject'))
   }
 
   function openProject(project?: ProjectRecord) {
@@ -279,10 +280,10 @@ export default function ChatView({ active = true }: { active?: boolean }) {
     try {
       if (editingProject) {
         await updateProject(editingProject.id, input)
-        void message.success('项目已更新')
+        void message.success(t('ui.projectUpdated'))
       } else {
         const project = await createProject(input)
-        void message.success('项目已创建')
+        void message.success(t('ui.projectCreated'))
         await startProjectNew(project.id)
       }
       setProjectDialogOpen(false)
@@ -295,17 +296,17 @@ export default function ChatView({ active = true }: { active?: boolean }) {
     await deleteProject(id)
     await chat.loadConversations(true)
     if (chat.activeProjectId === id) await startNew()
-    void message.success('项目已删除')
+    void message.success(t('ui.projectDeleted'))
   }
   async function updateProjectPrompt(id: string, prompt: string) {
     if (savingProjectPrompt) return false
     setSavingProjectPrompt(true)
     try {
       await updateProject(id, { prompt })
-      void message.success('项目提示已更新')
+      void message.success(t('ui.projectInstructionsUpdated'))
       return true
     } catch {
-      void message.error('项目提示保存失败，请稍后重试')
+      void message.error(t('ui.failedToSaveProjectInstructionsPleaseTryAgainLater'))
       return false
     } finally {
       setSavingProjectPrompt(false)
@@ -351,10 +352,10 @@ export default function ChatView({ active = true }: { active?: boolean }) {
     try {
       const model = await updatePreferredModel({ modelId: id })
       modelPreferences.setSelectedModelId(model.id)
-      void message.success('模型已切换')
+      void message.success(t('ui.modelSwitched'))
     } catch {
       void modelPreferences.loadModelPreferences(true)
-      void message.error('切换模型失败')
+      void message.error(t('ui.failedToSwitchModels'))
     }
   }
   async function setSpeech(id: string) {
@@ -362,7 +363,7 @@ export default function ChatView({ active = true }: { active?: boolean }) {
       const style = await updateSpeechStyle(id)
       modelPreferences.setSelectedSpeechStyleId(style.id)
       setSpeechStyle(style.id)
-      void message.success('语调偏好已更新')
+      void message.success(t('ui.responseStyleUpdated'))
     } catch {
       modelPreferences.setSelectedSpeechStyleId(user?.speechStyle || 'default')
     }
@@ -388,7 +389,7 @@ export default function ChatView({ active = true }: { active?: boolean }) {
         activeProjectId={chat.activeProjectId}
         newConversationActive={!chat.activeConversationId && !chat.activeProjectId}
         userInitial={(user?.username || 'U').charAt(0).toUpperCase()}
-        userDisplayName={user?.username || '用户'}
+        userDisplayName={user?.username || t('ui.user')}
         onClose={closeSidebar}
         onCreateConversation={() => void startNew()}
         onCreateProject={() => openProject()}
@@ -459,7 +460,7 @@ export default function ChatView({ active = true }: { active?: boolean }) {
         speechStyles={modelPreferences.availableSpeechStyles}
         selectedSpeechStyleId={modelPreferences.selectedSpeechStyleId}
         loadingSpeechStyles={modelPreferences.isLoadingSpeechStyles}
-        userDisplayName={user?.username || '用户'}
+        userDisplayName={user?.username || t('ui.user')}
         onClose={() => setSettingsOpen(false)}
         onTheme={(mode: ThemeMode) => setThemeMode(mode)}
         onModel={(id) => void setModel(id)}

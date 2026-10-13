@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useEffect, useState } from 'react'
 import { ColorPicker, Input, Modal } from 'antd'
 
@@ -32,6 +34,7 @@ export default function ProjectDialog({
   onClose: () => void
   onSubmit: (input: CreateProjectInput) => void
 }) {
+  useTranslation()
   const [icon, setIcon] = useState(projectIconOptions[0])
   const [iconColor, setIconColor] = useState(colors[0])
   const [title, setTitle] = useState('')
@@ -45,8 +48,9 @@ export default function ProjectDialog({
   }, [open, project])
   return (
     <Modal
+      closable={{ 'aria-label': t('ui.close') }}
       open={open}
-      title={project ? '编辑项目' : '新建项目'}
+      title={project ? t('ui.editProject') : t('ui.newProject')}
       width={440}
       centered
       classNames={{
@@ -56,8 +60,8 @@ export default function ProjectDialog({
       }}
       mask={{ closable: false }}
       confirmLoading={submitting}
-      okText="确定"
-      cancelText="取消"
+      okText={t('ui.confirm')}
+      cancelText={t('ui.cancel')}
       okButtonProps={{ disabled: !title.trim() }}
       onCancel={onClose}
       onOk={() =>
@@ -71,14 +75,14 @@ export default function ProjectDialog({
     >
       <div className="project-dialog-form">
         <label>
-          <span>图标</span>
+          <span>{t('ui.icon')}</span>
           <div className="project-dialog-icons">
             {projectIconOptions.map((name) => (
               <button
                 key={name}
                 className={icon === name ? 'is-active' : ''}
                 type="button"
-                aria-label={`选择${name}图标`}
+                aria-label={t('ui.selectTheValueIcon', { v0: name })}
                 onClick={() => setIcon(name)}
               >
                 <ProjectIcon name={name} />
@@ -87,35 +91,35 @@ export default function ProjectDialog({
           </div>
         </label>
         <label>
-          <span>颜色</span>
+          <span>{t('ui.color')}</span>
           <ColorPicker
             className="project-dialog-color-picker"
             value={iconColor}
             format="hex"
             disabledAlpha
-            presets={[{ label: '常用颜色', colors }]}
+            presets={[{ label: t('ui.commonColors'), colors }]}
             showText={(color) => color.toHexString().toUpperCase()}
             onChange={(color) => setIconColor(color.toHexString())}
           />
         </label>
         <label>
-          <span>标题</span>
+          <span>{t('ui.title')}</span>
           <Input
             value={title}
             maxLength={20}
             showCount
-            placeholder="输入项目标题"
+            placeholder={t('ui.enterAProjectTitle')}
             onChange={(event) => setTitle(event.target.value)}
           />
         </label>
         <label>
-          <span>提示词</span>
+          <span>{t('ui.instructions')}</span>
           <Input.TextArea
             value={prompt}
             rows={5}
             maxLength={500}
             showCount
-            placeholder="输入该项目下会话默认携带的提示词"
+            placeholder={t('ui.enterInstructionsForConversationsInThisProject')}
             onChange={(event) => setPrompt(event.target.value)}
           />
         </label>

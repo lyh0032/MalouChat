@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../i18n'
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Button, Slider } from 'antd'
 import {
@@ -12,6 +14,7 @@ import {
 import { Graph } from '@antv/g6'
 import { useNavigate } from 'react-router-dom'
 
+import { localizeArchitecture } from '../i18n/architecture'
 import architectureGraphData from '../generated/architecture-graph.json'
 import type {
   ArchitectureEdge,
@@ -22,7 +25,6 @@ import type {
 
 import './ArchitectureView.css'
 
-const graphData = architectureGraphData as ArchitectureGraph
 const MIN_ZOOM = 0.12
 const MAX_ZOOM = 1.8
 
@@ -55,6 +57,11 @@ function edgeStroke(edge: ArchitectureEdge) {
 }
 
 export default function ArchitectureView() {
+  const { i18n: uiI18n } = useTranslation()
+  const graphData = useMemo(
+    () => localizeArchitecture(architectureGraphData as ArchitectureGraph),
+    [uiI18n.language]
+  )
   const navigate = useNavigate()
   const containerRef = useRef<HTMLDivElement>(null)
   const graphRef = useRef<Graph | null>(null)
@@ -66,13 +73,22 @@ export default function ArchitectureView() {
   const [mobilePanel, setMobilePanel] = useState<'copy' | 'graph'>('copy')
   const [zoom, setZoom] = useState(1)
 
-  const layersById = useMemo(() => new Map(graphData.layers.map((layer) => [layer.id, layer])), [])
-  const groupsById = useMemo(() => new Map(graphData.groups.map((group) => [group.id, group])), [])
-  const nodesById = useMemo(() => new Map(graphData.nodes.map((node) => [node.id, node])), [])
+  const layersById = useMemo(
+    () => new Map(graphData.layers.map((layer) => [layer.id, layer])),
+    [graphData]
+  )
+  const groupsById = useMemo(
+    () => new Map(graphData.groups.map((group) => [group.id, group])),
+    [graphData]
+  )
+  const nodesById = useMemo(
+    () => new Map(graphData.nodes.map((node) => [node.id, node])),
+    [graphData]
+  )
   const layer = layersById.get(layerId) ?? graphData.layers[0]
   const layerNodes = useMemo(
     () => graphData.nodes.filter((node) => node.layer === layerId),
-    [layerId]
+    [graphData, layerId]
   )
   const moduleNodes = useMemo(
     () => layerNodes.filter((node) => node.nodeType === 'module'),
@@ -85,14 +101,14 @@ export default function ArchitectureView() {
   const layerNodeIds = useMemo(() => new Set(layerNodes.map((node) => node.id)), [layerNodes])
   const flows = useMemo(
     () => graphData.flows.filter((flow) => flow.steps.some((step) => layerNodeIds.has(step))),
-    [layerNodeIds]
+    [graphData, layerNodeIds]
   )
   const edges = useMemo(
     () =>
       graphData.edges.filter(
         (edge) => layerNodeIds.has(edge.source) && layerNodeIds.has(edge.target)
       ),
-    [layerNodeIds]
+    [graphData, layerNodeIds]
   )
   const selectedFlow = flows.find((flow) => flow.id === flowId) ?? flows[0]
   const currentNode = nodesById.get(nodeId)
@@ -230,9 +246,9 @@ export default function ArchitectureView() {
   }
 
   const stats = [
-    { label: '核心模块', value: moduleNodes.length },
-    { label: '代表能力', value: capabilityNodes.length },
-    { label: '模块关系', value: edges.length }
+    { label: t('ui.coreModules'), value: moduleNodes.length },
+    { label: t('ui.capabilities2'), value: capabilityNodes.length },
+    { label: t('ui.relationships'), value: edges.length }
   ]
 
   return (
@@ -243,19 +259,24 @@ export default function ArchitectureView() {
           type="button"
           onClick={() => setMobilePanel('copy')}
         >
-          文字说明
+          {t('ui.overview')}
         </button>
         <button
           className={mobilePanel === 'graph' ? 'is-active' : ''}
           type="button"
           onClick={() => setMobilePanel('graph')}
         >
-          图形架构
+          {t('ui.architectureGraph')}
         </button>
       </div>
       <section className={`architecture-copy${mobilePanel !== 'copy' ? ' is-mobile-hidden' : ''}`}>
         <div className="architecture-topbar">
-          <Button shape="circle" icon={<ArrowLeftOutlined />} aria-label="返回" onClick={goBack} />
+          <Button
+            shape="circle"
+            icon={<ArrowLeftOutlined />}
+            aria-label={t('ui.back')}
+            onClick={goBack}
+          />
           <div>
             <span className="architecture-eyebrow">Project Architecture</span>
             <h1>{graphData.title}</h1>
@@ -286,7 +307,7 @@ export default function ArchitectureView() {
         <section className="architecture-panel">
           <div className="architecture-panel-title">
             <BranchesOutlined />
-            <span>{layer?.label}链路</span>
+            <span>{t('architectureUi.flow', { name: layer?.label })}</span>
           </div>
           <div className="architecture-flow-list">
             {flows.map((flow) => (
@@ -297,7 +318,7 @@ export default function ArchitectureView() {
                 onClick={() => selectFlow(flow)}
               >
                 <span>{flow.label}</span>
-                <small>{flow.steps.length} 个节点</small>
+                <small>{t('counts.nodes', { count: flow.steps.length })}</small>
               </button>
             ))}
           </div>
@@ -335,14 +356,14 @@ export default function ArchitectureView() {
                   icon={<ArrowLeftOutlined />}
                   onClick={() => setNodeId(selectedParent.id)}
                 >
-                  返回所属模块
+                  {t('ui.backToParentModule')}
                 </Button>
               ) : null}
             </div>
             <p>{selectedNode?.details}</p>
             {selectedCapabilities.length ? (
               <div className="architecture-capabilities">
-                <strong>代表能力</strong>
+                <strong>{t('ui.capabilities2')}</strong>
                 {selectedCapabilities.map((capability) => (
                   <button
                     key={capability.id}
@@ -373,7 +394,7 @@ export default function ArchitectureView() {
             <div className="architecture-files">
               <div className="architecture-files-title">
                 <FileTextOutlined />
-                <span>关键文件</span>
+                <span>{t('ui.keyFiles')}</span>
               </div>
               {selectedNode?.files.map((file) => (
                 <code key={file}>{file}</code>
@@ -390,7 +411,7 @@ export default function ArchitectureView() {
             <div className="architecture-graph-title">
               <div className="architecture-graph-heading">
                 <ShareAltOutlined />
-                <span>{layer?.label}图</span>
+                <span>{t('architectureUi.graph', { name: layer?.label })}</span>
               </div>
               <div className="architecture-layer-switch architecture-layer-switch--graph">
                 {graphData.layers.map((item) => (
@@ -449,7 +470,7 @@ export default function ArchitectureView() {
           <div className="architecture-zoom-controls">
             <button
               type="button"
-              aria-label="缩小架构图"
+              aria-label={t('ui.zoomOut')}
               onClick={() => applyZoom(zoomRef.current - 0.16)}
             >
               -
@@ -464,14 +485,14 @@ export default function ArchitectureView() {
             />
             <button
               type="button"
-              aria-label="放大架构图"
+              aria-label={t('ui.zoomIn')}
               onClick={() => applyZoom(zoomRef.current + 0.16)}
             >
               +
             </button>
             <button
               type="button"
-              aria-label="重置架构图"
+              aria-label={t('ui.resetGraph')}
               onClick={() => {
                 applyZoom(1)
                 void graphRef.current?.fitCenter({ duration: 180 })
@@ -483,7 +504,7 @@ export default function ArchitectureView() {
         </div>
         <div className="architecture-search-hint">
           <SearchOutlined />
-          <span>拖动画布查看关系；桌面端可滚动鼠标滚轮，移动端可双指缩放。</span>
+          <span>{t('ui.dragTheCanvasToExploreConnectionsUseTheMouseWheelOn')}</span>
         </div>
       </section>
     </main>

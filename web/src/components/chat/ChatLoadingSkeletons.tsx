@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import './ChatLoadingSkeletons.css'
 
 function WelcomeSkeleton() {
@@ -27,9 +29,10 @@ function ComposerSkeleton() {
 }
 
 export function ChatStartupSkeleton() {
+  useTranslation()
   return (
     <div className="chat-startup-skeleton" role="status" aria-live="polite" aria-busy="true">
-      <span className="chat-loading-label">正在加载对话</span>
+      <span className="chat-loading-label">{t('ui.loadingConversation')}</span>
       <aside className="chat-startup-skeleton-sidebar" aria-hidden="true">
         <div className="chat-startup-skeleton-brand">
           <span className="chat-startup-skeleton-mark chat-loading-shimmer" />
@@ -61,9 +64,10 @@ export function ChatStartupSkeleton() {
 }
 
 export function ChatDraftSkeleton() {
+  useTranslation()
   return (
     <section className="chat-draft-skeleton" role="status" aria-live="polite" aria-busy="true">
-      <span className="chat-loading-label">正在恢复新建对话</span>
+      <span className="chat-loading-label">{t('ui.restoringYourDraft')}</span>
       <WelcomeSkeleton />
       <ComposerSkeleton />
     </section>

@@ -1,12 +1,7 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../i18n'
 import { lazy, Suspense, useEffect, useState } from 'react'
-import {
-  BrowserRouter,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useLocation
-} from 'react-router-dom'
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { Spin } from 'antd'
 
 import { ChatStartupSkeleton } from '../components/chat/ChatLoadingSkeletons'
@@ -21,10 +16,16 @@ const ChatView = lazy(() => import('../views/ChatView'))
 const ArchitectureView = lazy(() => import('../views/ArchitectureView'))
 
 function RouteLoading() {
+  useTranslation()
   const location = useLocation()
-  if (location.pathname === '/' || location.pathname === '/chat' || location.pathname.startsWith('/chat/')) return <ChatStartupSkeleton />
+  if (
+    location.pathname === '/' ||
+    location.pathname === '/chat' ||
+    location.pathname.startsWith('/chat/')
+  )
+    return <ChatStartupSkeleton />
   return (
-    <div className="app-route-loading" aria-label="正在加载页面">
+    <div className="app-route-loading" aria-label={t('ui.loadingPage')}>
       <Spin size="large" />
     </div>
   )
@@ -88,32 +89,32 @@ export default function AppRouter() {
     <BrowserRouter>
       <RouteTracker />
       <Suspense fallback={<RouteLoading />}>
-      <Routes>
-        <Route path="/" element={<Navigate to="/chat" replace />} />
+        <Routes>
+          <Route path="/" element={<Navigate to="/chat" replace />} />
 
-        <Route element={<AuthGate publicOnly />}>
-          <Route path="/login" element={<LoginView />} />
-          <Route path="/register" element={<LoginView />} />
-        </Route>
+          <Route element={<AuthGate publicOnly />}>
+            <Route path="/login" element={<LoginView />} />
+            <Route path="/register" element={<LoginView />} />
+          </Route>
 
-        <Route path="/architecture" element={<ArchitectureView />} />
+          <Route path="/architecture" element={<ArchitectureView />} />
 
-        <Route element={<AuthGate />}>
-          <Route element={<AuthenticatedShell />}>
-            <Route path="/chat" element={null} />
-            <Route path="/chat/:projectId" element={null} />
-            <Route path="/chat/:projectId/:conversationId" element={null} />
-            <Route path="/memories" element={<MemoryView />} />
-            <Route path="/knowledge-bases" element={<KnowledgeBaseView />} />
-            <Route path="/library-assets" element={<LibraryAssetView />} />
-            <Route element={<AdminGate />}>
-              <Route path="/admin" element={<AdminView />} />
+          <Route element={<AuthGate />}>
+            <Route element={<AuthenticatedShell />}>
+              <Route path="/chat" element={null} />
+              <Route path="/chat/:projectId" element={null} />
+              <Route path="/chat/:projectId/:conversationId" element={null} />
+              <Route path="/memories" element={<MemoryView />} />
+              <Route path="/knowledge-bases" element={<KnowledgeBaseView />} />
+              <Route path="/library-assets" element={<LibraryAssetView />} />
+              <Route element={<AdminGate />}>
+                <Route path="/admin" element={<AdminView />} />
+              </Route>
             </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/chat" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/chat" replace />} />
+        </Routes>
       </Suspense>
     </BrowserRouter>
   )

@@ -1,8 +1,6 @@
-import {
-  resolveFileUrls,
-  type FileUrlMode,
-  type FileUrlResolveInput
-} from '../api/file'
+import { localizeErrorMessage } from '../i18n/errors'
+import { t } from '../i18n'
+import { resolveFileUrls, type FileUrlMode, type FileUrlResolveInput } from '../api/file'
 
 type PendingRequest = {
   input: FileUrlResolveInput
@@ -47,7 +45,9 @@ async function flushPendingRequests() {
       const result = results[index]
 
       if (!result?.url || result.error) {
-        const error = new Error(result?.error || '文件地址兑换失败')
+        const error = new Error(
+          localizeErrorMessage(result?.error || t('ui.failedToResolveTheFileUrl'))
+        )
         requests.forEach((request) => request.reject(error))
         continue
       }
@@ -59,7 +59,8 @@ async function flushPendingRequests() {
       requests.forEach((request) => request.resolve(result.url))
     }
   } catch (error) {
-    const resolvedError = error instanceof Error ? error : new Error('文件地址兑换失败')
+    const resolvedError =
+      error instanceof Error ? error : new Error(t('ui.failedToResolveTheFileUrl'))
     entries.forEach(([, requests]) => {
       requests.forEach((request) => request.reject(resolvedError))
     })

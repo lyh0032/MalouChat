@@ -14,6 +14,7 @@ const PUBLIC_USER_SELECT = {
   type: true,
   isAdmin: true,
   speechStyle: true,
+  language: true,
   createdAt: true
 } as const
 
@@ -23,6 +24,7 @@ type PublicUser = {
   username: string
   type: UserType
   isAdmin: boolean
+  language: string
   speechStyle: string
   createdAt: Date
 }
@@ -33,6 +35,7 @@ function toPublicUser(user: {
   username: string
   type: UserType
   isAdmin: boolean
+  language: string
   speechStyle: string
   createdAt: Date
 }): PublicUser {
@@ -43,6 +46,7 @@ function toPublicUser(user: {
     type: user.type,
     isAdmin: user.isAdmin,
     speechStyle: user.speechStyle,
+    language: user.language,
     createdAt: user.createdAt
   }
 }
@@ -78,7 +82,7 @@ async function nextVisitorUsername() {
   return `Visitor_${visitorNumber.padStart(4, '0')}`
 }
 
-async function createGuestUser() {
+async function createGuestUser(language = 'zh-CN') {
   const guestKey = randomBytes(32).toString('base64url')
   const guestSecretHash = hashGuestKey(guestKey)
 
@@ -92,6 +96,7 @@ async function createGuestUser() {
           username,
           passwordHash: `guest-disabled:${randomBytes(32).toString('hex')}`,
           type: 'guest',
+          language,
           guestSecretHash,
           conversationDraft: {
             create: {}
@@ -103,10 +108,7 @@ async function createGuestUser() {
       return { user, guestKey }
     } catch (error) {
       const isUsernameConflict =
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        error.code === 'P2002'
+        typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002'
 
       if (!isUsernameConflict) throw error
     }
@@ -139,6 +141,7 @@ export async function register(data: RegisterBody) {
       username: data.username,
       passwordHash,
       type: 'registered',
+      language: data.language ?? 'zh-CN',
       isAdmin: isFirstUser,
       conversationDraft: {
         create: {}
@@ -198,7 +201,7 @@ export async function guestLogin(data: GuestLoginBody) {
     }
   }
 
-  const { user, guestKey } = await createGuestUser()
+  const { user, guestKey } = await createGuestUser(data.language)
 
   return {
     ...issueTokenPair(user.id),

@@ -1,11 +1,8 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useEffect, useState } from 'react'
 import { Empty, Input, Modal, Radio, Segmented, Spin } from 'antd'
-import {
-  FileImageOutlined,
-  FileOutlined,
-  PictureOutlined,
-  SearchOutlined
-} from '@ant-design/icons'
+import { FileImageOutlined, FileOutlined, PictureOutlined, SearchOutlined } from '@ant-design/icons'
 
 import { fetchSelectableLibraryAssets } from '../../api/library-asset'
 import type { LibraryAsset, LibraryAssetCategory } from '../../types/library-asset'
@@ -21,13 +18,6 @@ type Props = {
   onConfirm: (asset: LibraryAsset) => void
 }
 
-const categoryOptions: Array<{ label: string; value: PickerCategory }> = [
-  { label: '全部', value: 'all' },
-  { label: '文件', value: 'user_file' },
-  { label: '图片', value: 'user_image' },
-  { label: '文生图', value: 'generated_image' }
-]
-
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -40,12 +30,15 @@ function assetIcon(category: LibraryAssetCategory) {
   return <FileOutlined />
 }
 
-export default function LibraryAssetPickerDialog({
-  open,
-  submitting,
-  onCancel,
-  onConfirm
-}: Props) {
+export default function LibraryAssetPickerDialog({ open, submitting, onCancel, onConfirm }: Props) {
+  const categoryOptions: Array<{ label: string; value: PickerCategory }> = [
+    { label: t('ui.all'), value: 'all' },
+    { label: t('ui.files'), value: 'user_file' },
+    { label: t('ui.images'), value: 'user_image' },
+    { label: t('ui.generatedImages'), value: 'generated_image' }
+  ]
+
+  useTranslation()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<PickerCategory>('all')
   const [assets, setAssets] = useState<LibraryAsset[]>([])
@@ -87,11 +80,12 @@ export default function LibraryAssetPickerDialog({
 
   return (
     <Modal
+      closable={{ 'aria-label': t('ui.close') }}
       className="library-asset-picker"
       open={open}
-      title="从资料库添加"
-      okText="添加"
-      cancelText="取消"
+      title={t('ui.addFromLibrary')}
+      okText={t('ui.add')}
+      cancelText={t('ui.cancel')}
       okButtonProps={{ disabled: !selectedAsset, loading: submitting }}
       cancelButtonProps={{ disabled: submitting }}
       onCancel={onCancel}
@@ -103,7 +97,7 @@ export default function LibraryAssetPickerDialog({
         <Input
           allowClear
           prefix={<SearchOutlined />}
-          placeholder="搜索文件名"
+          placeholder={t('ui.searchFileNames')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
@@ -118,9 +112,13 @@ export default function LibraryAssetPickerDialog({
       <Spin spinning={loading}>
         <div className="library-asset-picker-list">
           {!loading && assets.length === 0 ? (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="没有可添加的资料" />
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('ui.noAssetsAvailable')} />
           ) : (
-            <div className="library-asset-picker-items" role="radiogroup" aria-label="可选资料">
+            <div
+              className="library-asset-picker-items"
+              role="radiogroup"
+              aria-label={t('ui.availableAssets')}
+            >
               {assets.map((asset) => (
                 <button
                   key={asset.id}

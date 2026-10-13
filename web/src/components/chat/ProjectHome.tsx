@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t, getUiLanguage } from '../../i18n'
 import { useEffect, useState } from 'react'
 import { Button, Input } from 'antd'
 
@@ -18,10 +20,11 @@ type Props = {
 function formatConversationDate(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return `${date.getMonth() + 1}月${date.getDate()}日`
+  return new Intl.DateTimeFormat(getUiLanguage(), { month: 'short', day: 'numeric' }).format(date)
 }
 
 export default function ProjectHome(props: Props) {
+  useTranslation()
   const [activeTab, setActiveTab] = useState<'chat' | 'prompt'>('chat')
   const [editingPrompt, setEditingPrompt] = useState(false)
   const [promptDraft, setPromptDraft] = useState(props.project.prompt ?? '')
@@ -39,10 +42,7 @@ export default function ProjectHome(props: Props) {
 
   async function savePrompt() {
     if (!promptChanged || props.savingPrompt) return
-    const saved = await props.onUpdatePrompt(
-      props.project.id,
-      promptDraft.trim().slice(0, 500)
-    )
+    const saved = await props.onUpdatePrompt(props.project.id, promptDraft.trim().slice(0, 500))
     if (saved) setEditingPrompt(false)
   }
 
@@ -59,11 +59,11 @@ export default function ProjectHome(props: Props) {
         </span>
         <div className="project-home-title">
           <h2>{props.project.title}</h2>
-          <p>在这个项目下开始新会话，或继续下面的历史会话。</p>
+          <p>{t('ui.startANewConversationInThisProjectOrContinueAPrevious')}</p>
         </div>
       </header>
 
-      <div className="project-home-tabs" role="tablist" aria-label="项目内容">
+      <div className="project-home-tabs" role="tablist" aria-label={t('ui.projectContent')}>
         <button
           className={`project-home-tab${activeTab === 'chat' ? ' is-active' : ''}`}
           type="button"
@@ -71,7 +71,7 @@ export default function ProjectHome(props: Props) {
           aria-selected={activeTab === 'chat'}
           onClick={() => setActiveTab('chat')}
         >
-          聊天
+          {t('ui.chat')}
         </button>
         <button
           className={`project-home-tab${activeTab === 'prompt' ? ' is-active' : ''}`}
@@ -80,7 +80,7 @@ export default function ProjectHome(props: Props) {
           aria-selected={activeTab === 'prompt'}
           onClick={() => setActiveTab('prompt')}
         >
-          提示
+          {t('ui.instructions2')}
         </button>
       </div>
 
@@ -95,14 +95,14 @@ export default function ProjectHome(props: Props) {
             >
               <span className="project-home-conversation-main">
                 <strong>{conversation.title}</strong>
-                <span>{conversation.lastMessagePreview || '暂无消息'}</span>
+                <span>{conversation.lastMessagePreview || t('ui.noMessagesYet')}</span>
               </span>
               <time>{formatConversationDate(conversation.updatedAt)}</time>
             </button>
           ))}
           {!props.conversations.length ? (
             <div className="project-home-empty">
-              这个项目还没有历史会话。直接在下方输入，开始第一段项目对话。
+              {t('ui.noConversationsInThisProjectYetTypeBelowToStartThe')}
             </div>
           ) : null}
         </div>
@@ -111,40 +111,44 @@ export default function ProjectHome(props: Props) {
           {!editingPrompt ? (
             <div className="project-home-prompt-view">
               <div className="project-home-prompt-view-header">
-                <span>项目提示词</span>
+                <span>{t('ui.projectInstructions')}</span>
                 <Button type="text" size="small" onClick={() => setEditingPrompt(true)}>
-                  编辑提示
+                  {t('ui.editInstructions')}
                 </Button>
               </div>
-              <p className={props.project.prompt ? 'project-home-prompt-text' : 'project-home-prompt-empty'}>
+              <p
+                className={
+                  props.project.prompt ? 'project-home-prompt-text' : 'project-home-prompt-empty'
+                }
+              >
                 {props.project.prompt ||
-                  '还没有设置提示词。添加后，项目下所有会话都会自动携带这段提示。'}
+                  t('ui.noInstructionsYetAddInstructionsToApplyThemToEveryConversation')}
               </p>
             </div>
           ) : (
             <div className="project-home-prompt-edit">
               <div className="project-home-prompt-header">
-                <span>编辑项目提示词</span>
+                <span>{t('ui.editProjectInstructions')}</span>
                 <span>{promptDraft.length}/500</span>
               </div>
               <Input.TextArea
                 value={promptDraft}
                 maxLength={500}
                 rows={8}
-                placeholder="为这个项目设置长期提示词，例如回答语言、角色、格式或风格要求。"
+                placeholder={t('ui.setOngoingInstructionsSuchAsResponseLanguageRoleFormatOrStyle')}
                 onChange={(event) => setPromptDraft(event.target.value)}
               />
               <div className="project-home-prompt-actions">
-                <span>项目下所有会话都会自动携带这段提示词。</span>
+                <span>{t('ui.theseInstructionsApplyToEveryConversationInThisProject')}</span>
                 <div className="project-home-prompt-buttons">
-                  <Button onClick={cancelPromptEdit}>取消</Button>
+                  <Button onClick={cancelPromptEdit}>{t('ui.cancel')}</Button>
                   <Button
                     type="primary"
                     loading={props.savingPrompt}
                     disabled={!promptChanged}
                     onClick={() => void savePrompt()}
                   >
-                    保存提示
+                    {t('ui.saveInstructions')}
                   </Button>
                 </div>
               </div>

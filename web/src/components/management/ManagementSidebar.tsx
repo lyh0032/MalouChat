@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useEffect, useState, type ReactNode } from 'react'
 import { App as AntApp } from 'antd'
 import { useNavigate } from 'react-router-dom'
@@ -10,9 +12,7 @@ import { useKnowledgeBaseStore } from '../../stores/knowledge-base'
 import { usePreferencesStore } from '../../stores/preferences'
 import { useThemeStore, type ThemeMode } from '../../stores/theme'
 import ChatSettingsDialog from '../chat/ChatSettingsDialog'
-import AppSidebarShell, {
-  type AppSidebarActiveItem
-} from '../navigation/AppSidebarShell'
+import AppSidebarShell, { type AppSidebarActiveItem } from '../navigation/AppSidebarShell'
 
 import './ManagementSidebar.css'
 
@@ -39,6 +39,7 @@ export default function ManagementSidebar({
   onClose,
   onBack
 }: ManagementSidebarProps) {
+  useTranslation()
   const navigate = useNavigate()
   const { message } = AntApp.useApp()
   const user = useAuthStore((state) => state.user)
@@ -82,10 +83,10 @@ export default function ManagementSidebar({
     try {
       const model = await updatePreferredModel({ modelId: id })
       preferences.setSelectedModelId(model.id)
-      void message.success('模型已切换')
+      void message.success(t('ui.modelSwitched'))
     } catch {
       void preferences.loadModelPreferences(true)
-      void message.error('切换模型失败')
+      void message.error(t('ui.failedToSwitchModels'))
     }
   }
 
@@ -94,10 +95,10 @@ export default function ManagementSidebar({
       const style = await updateSpeechStyle(id)
       preferences.setSelectedSpeechStyleId(style.id)
       setSpeechStyle(style.id)
-      void message.success('语调偏好已更新')
+      void message.success(t('ui.responseStyleUpdated'))
     } catch {
       preferences.setSelectedSpeechStyleId(user?.speechStyle || 'default')
-      void message.error('语调偏好更新失败')
+      void message.error(t('ui.failedToUpdateResponseStyle'))
     }
   }
 
@@ -110,7 +111,7 @@ export default function ManagementSidebar({
         knowledgeBaseCount={knowledgeBaseCount}
         isAdmin={Boolean(user?.isAdmin)}
         userInitial={(user?.username || 'U').charAt(0).toUpperCase()}
-        userDisplayName={user?.username || '用户'}
+        userDisplayName={user?.username || t('ui.user')}
         onClose={onClose}
         onBrandClick={onBack}
         onCreateConversation={() => navigateFromSidebar('/chat')}
@@ -140,7 +141,7 @@ export default function ManagementSidebar({
         speechStyles={preferences.availableSpeechStyles}
         selectedSpeechStyleId={preferences.selectedSpeechStyleId}
         loadingSpeechStyles={preferences.isLoadingSpeechStyles}
-        userDisplayName={user?.username || '用户'}
+        userDisplayName={user?.username || t('ui.user')}
         onClose={() => setSettingsOpen(false)}
         onTheme={(mode: ThemeMode) => setThemeMode(mode)}
         onModel={(id) => void setModel(id)}

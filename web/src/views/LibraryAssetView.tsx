@@ -1,3 +1,6 @@
+import { localizeErrorMessage } from '../i18n/errors'
+import { useTranslation } from 'react-i18next'
+import { t, getUiLanguage } from '../i18n'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { App as AntApp, Button, Empty, Image, Segmented, Spin, Table, Tag, Tooltip } from 'antd'
 import {
@@ -24,14 +27,6 @@ import '../components/management/ManagementPageLayout.css'
 
 type CategoryFilter = 'all' | LibraryAssetCategory
 
-const categoryOptions: Array<{ label: string; value: CategoryFilter }> = [
-  { label: '全部', value: 'all' },
-  { label: '文件', value: 'user_file' },
-  { label: '图片', value: 'user_image' },
-  { label: '文生图', value: 'generated_image' },
-  { label: '知识库', value: 'knowledge_base_attachment' }
-]
-
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -39,7 +34,7 @@ function formatSize(bytes: number) {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(getUiLanguage(), {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -60,6 +55,15 @@ function isPreviewableImage(asset: LibraryAsset) {
 }
 
 export default function LibraryAssetView() {
+  const categoryOptions: Array<{ label: string; value: CategoryFilter }> = [
+    { label: t('ui.all'), value: 'all' },
+    { label: t('ui.files'), value: 'user_file' },
+    { label: t('ui.images'), value: 'user_image' },
+    { label: t('ui.generatedImages'), value: 'generated_image' },
+    { label: t('ui.knowledgeBases'), value: 'knowledge_base_attachment' }
+  ]
+
+  const { i18n: uiI18n } = useTranslation()
   const navigate = useNavigate()
   const { message, modal } = AntApp.useApp()
   const isMobile = useMobile()
@@ -96,7 +100,7 @@ export default function LibraryAssetView() {
       label: option.label,
       count: counts.get(option.value as LibraryAssetCategory) ?? 0
     }))
-  }, [assets])
+  }, [assets, uiI18n.language])
 
   function returnToChat() {
     navigate(getLastChatRoute())
@@ -160,21 +164,26 @@ export default function LibraryAssetView() {
 
   function confirmDelete(asset: LibraryAsset) {
     if (!asset.deletable) {
-      void message.warning(asset.deleteBlockedReason || '当前资料不能删除')
+      void message.warning(
+        localizeErrorMessage(
+          asset.deleteBlockedReason || t('ui.thisAssetCannotBeDeleted'),
+          'LIBRARY_ASSET_IN_USE'
+        )
+      )
       return
     }
 
     modal.confirm({
-      title: '删除资料',
-      content: `确认删除「${asset.fileName}」吗？`,
-      okText: '删除',
-      cancelText: '取消',
+      title: t('ui.deleteAsset'),
+      content: t('ui.deleteValue', { v0: asset.fileName }),
+      okText: t('ui.delete'),
+      cancelText: t('ui.cancel'),
       okButtonProps: { danger: true },
       async onOk() {
         setDeletingId(asset.id)
         try {
           await deleteAsset(asset.id)
-          void message.success('资料已删除')
+          void message.success(t('ui.assetDeleted'))
         } finally {
           setDeletingId('')
         }
@@ -191,7 +200,7 @@ export default function LibraryAssetView() {
 
   const columns = [
     {
-      title: '文件名',
+      title: t('ui.fileName'),
       dataIndex: 'fileName',
       key: 'fileName',
       ellipsis: true,
@@ -211,43 +220,50 @@ export default function LibraryAssetView() {
       )
     },
     {
-      title: '关联会话',
+      title: t('ui.linkedConversations'),
       key: 'conversationTitle',
       width: 260,
       render: (_: unknown, asset: LibraryAsset) => renderConversationReferences(asset)
     },
     {
-      title: '文件大小',
+      title: t('ui.fileSize'),
       key: 'size',
       width: 120,
       render: (_: unknown, asset: LibraryAsset) => formatSize(asset.size)
     },
     {
-      title: '分类',
+      title: t('ui.category'),
       key: 'category',
       width: 140,
       render: (_: unknown, asset: LibraryAsset) => <Tag>{asset.categoryLabel}</Tag>
     },
     {
-      title: '创建时间',
+      title: t('ui.createdAt'),
       key: 'createdAt',
       width: 180,
       render: (_: unknown, asset: LibraryAsset) => formatDate(asset.createdAt)
     },
     {
-      title: '操作',
+      title: t('ui.actions2'),
       key: 'actions',
       width: 76,
       fixed: 'right' as const,
       render: (_: unknown, asset: LibraryAsset) => (
         <Tooltip
-          title={asset.deletable ? '删除资料' : asset.deleteBlockedReason || '当前资料不能删除'}
+          title={
+            asset.deletable
+              ? t('ui.deleteAsset')
+              : localizeErrorMessage(
+                  asset.deleteBlockedReason || t('ui.thisAssetCannotBeDeleted'),
+                  'LIBRARY_ASSET_IN_USE'
+                )
+          }
         >
           <Button
             danger
             type="text"
             shape="circle"
-            aria-label="删除"
+            aria-label={t('ui.delete')}
             icon={<DeleteOutlined />}
             disabled={!asset.deletable}
             loading={deletingId === asset.id}
@@ -264,8 +280,8 @@ export default function LibraryAssetView() {
         isMobile={isMobile}
         isOpen={isSidebarOpen}
         activeItem="library-assets"
-        summaryTitle="资料库"
-        summaryText={`${assets.length} 项资料`}
+        summaryTitle={t('ui.library')}
+        summaryText={t('counts.assets', { count: assets.length })}
         icon={<InboxOutlined />}
         stats={sidebarStats}
         onClose={() => setSidebarOpen(false)}
@@ -278,11 +294,11 @@ export default function LibraryAssetView() {
             <div className="library-layout-header-main management-page-header-main">
               {isMobile ? (
                 <ManagementSidebarToggle
-                  label="打开侧边菜单"
+                  label={t('ui.openSidebar')}
                   onClick={() => setSidebarOpen(true)}
                 />
               ) : null}
-              <h2>资料库</h2>
+              <h2>{t('ui.library')}</h2>
             </div>
           </header>
 
@@ -293,19 +309,24 @@ export default function LibraryAssetView() {
               value={categoryFilter}
               onChange={setCategoryFilter}
             />
-            <span className="library-layout-count">{filteredAssets.length} 项</span>
+            <span className="library-layout-count">
+              {t('counts.items', { count: filteredAssets.length })}
+            </span>
           </section>
 
           <section className="library-layout-content">
             <Spin spinning={isLoading}>
               {!isLoading && assets.length === 0 ? (
                 <div className="library-layout-state">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无资料" />
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('ui.noAssetsYet')} />
                 </div>
               ) : !isLoading && filteredAssets.length === 0 ? (
                 <div className="library-layout-state">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前筛选下没有结果">
-                    <Button onClick={() => setCategoryFilter('all')}>查看全部</Button>
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={t('ui.noResultsForThisFilter')}
+                  >
+                    <Button onClick={() => setCategoryFilter('all')}>{t('ui.viewAll')}</Button>
                   </Empty>
                 </div>
               ) : isMobile ? (
@@ -332,14 +353,17 @@ export default function LibraryAssetView() {
                       <Tooltip
                         title={
                           asset.deletable
-                            ? '删除资料'
-                            : asset.deleteBlockedReason || '当前资料不能删除'
+                            ? t('ui.deleteAsset')
+                            : localizeErrorMessage(
+                                asset.deleteBlockedReason || t('ui.thisAssetCannotBeDeleted'),
+                                'LIBRARY_ASSET_IN_USE'
+                              )
                         }
                       >
                         <Button
                           danger
                           shape="circle"
-                          aria-label="删除"
+                          aria-label={t('ui.delete')}
                           icon={<DeleteOutlined />}
                           disabled={!asset.deletable}
                           loading={deletingId === asset.id}

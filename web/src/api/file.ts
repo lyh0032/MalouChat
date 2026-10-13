@@ -1,3 +1,5 @@
+import { localizeErrorMessage } from '../i18n/errors'
+import { t } from '../i18n'
 import { getStoredToken } from '../utils/token'
 import { apiBaseUrl, ensureFreshAccessToken, ensureFetchResponseOk, fetchWithAuth } from './http'
 
@@ -57,19 +59,21 @@ export async function uploadFile(
           const json = JSON.parse(xhr.responseText)
           resolve(json.data)
         } catch {
-          reject(new Error('解析响应失败'))
+          reject(new Error(t('ui.failedToParseTheResponse')))
         }
       } else {
         try {
           const json = JSON.parse(xhr.responseText)
-          reject(new Error(json.message || '上传失败'))
+          reject(
+            new Error(localizeErrorMessage(json.message || t('ui.uploadFailed'), json.errorCode))
+          )
         } catch {
-          reject(new Error('上传失败'))
+          reject(new Error(t('ui.uploadFailed')))
         }
       }
     })
 
-    xhr.addEventListener('error', () => reject(new Error('网络错误')))
+    xhr.addEventListener('error', () => reject(new Error(t('ui.networkError'))))
     xhr.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
 
     if (signal) {
@@ -85,7 +89,7 @@ export async function uploadFile(
 export async function fetchPendingFiles(conversationId?: string): Promise<UploadedFile[]> {
   const params = conversationId ? `?conversationId=${encodeURIComponent(conversationId)}` : ''
   const response = await fetchWithAuth(`/files/pending${params}`, { method: 'GET' })
-  await ensureFetchResponseOk(response, '获取文件列表失败')
+  await ensureFetchResponseOk(response, t('ui.failedToLoadFiles'))
   const json = await response.json()
   return json.data as UploadedFile[]
 }
@@ -99,10 +103,12 @@ export async function deleteFile(
   if (options?.conversationDraft) params.set('conversationDraft', 'true')
   const suffix = params.size ? `?${params.toString()}` : ''
   const response = await fetchWithAuth(`/files/${fileId}${suffix}`, { method: 'DELETE' })
-  await ensureFetchResponseOk(response, '删除文件失败')
+  await ensureFetchResponseOk(response, t('ui.failedToDeleteTheFile'))
 }
 
-export async function resolveFileUrls(items: FileUrlResolveInput[]): Promise<FileUrlResolveResult[]> {
+export async function resolveFileUrls(
+  items: FileUrlResolveInput[]
+): Promise<FileUrlResolveResult[]> {
   const response = await fetchWithAuth('/files/url', {
     method: 'POST',
     headers: {
@@ -110,7 +116,7 @@ export async function resolveFileUrls(items: FileUrlResolveInput[]): Promise<Fil
     },
     body: JSON.stringify({ items })
   })
-  await ensureFetchResponseOk(response, '获取文件地址失败')
+  await ensureFetchResponseOk(response, t('ui.failedToGetTheFileUrl'))
   const json = await response.json()
   return json.data.items as FileUrlResolveResult[]
 }

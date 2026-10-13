@@ -27,3 +27,11 @@ export async function searchUsers(currentUserId: string, query: string) {
 
   return { users }
 }
+
+export async function updateUserLanguage(userId: string, language: 'zh-CN' | 'en-US') {
+  return prisma.user.update({
+    where: { id: userId },
+    data: { language },
+    select: { language: true }
+  })
+}

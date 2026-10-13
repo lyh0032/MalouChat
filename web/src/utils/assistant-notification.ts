@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import type { Message } from '../types/chat'
 import { markdownToPlainText } from './markdown'
 
@@ -49,14 +50,14 @@ export function buildAssistantNotificationContent(
   if (message.type === 'image') {
     return {
       title: 'MalouChat',
-      body: '你的图片已生成，点击即可查看。'
+      body: t('ui.yourImageIsReadyClickToViewIt')
     }
   }
 
   const answerText = truncateNotificationBody(markdownToPlainText(message.content))
   return {
-    title: 'Malou 已完成回答',
-    body: answerText || '回答已经生成完成，点击即可查看。'
+    title: t('ui.malouHasFinishedResponding'),
+    body: answerText || t('ui.yourResponseIsReadyClickToViewIt')
   }
 }
 

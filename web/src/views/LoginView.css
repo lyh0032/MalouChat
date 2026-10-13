@@ -304,3 +304,7 @@ html[data-theme='dark'] .auth-architecture-entry {
     font-size: 14px;
   }
 }
+
+.auth-preferences { position: fixed; top: 20px; right: 20px; z-index: 3; display: flex; align-items: center; gap: 10px; }
+.auth-preferences > .ant-select { width: 136px; }
+@media (max-width: 640px) { .auth-preferences { top: 12px; right: 12px; gap: 8px; } .auth-preferences > .ant-select { width: 116px; } }

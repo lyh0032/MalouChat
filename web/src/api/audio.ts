@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import type { ApiResponse } from '../types/api'
 import { ensureFetchResponseOk, fetchWithAuth } from './http'
 
@@ -11,7 +12,7 @@ export async function transcribeAudio(audioBlob: Blob, signal?: AbortSignal): Pr
     signal
   })
 
-  await ensureFetchResponseOk(response, '语音识别失败')
+  await ensureFetchResponseOk(response, t('ui.speechRecognitionFailed'))
 
   const payload = (await response.json()) as ApiResponse<{ text: string }>
   return payload.data.text

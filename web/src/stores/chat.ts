@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import { create } from 'zustand'
 
 import {
@@ -25,7 +26,10 @@ import type {
   MessageFile,
   StreamAssistantStatus
 } from '../types/chat'
-import { notifyAssistantCompletion, requestAssistantNotificationPermission } from '../utils/assistant-notification'
+import {
+  notifyAssistantCompletion,
+  requestAssistantNotificationPermission
+} from '../utils/assistant-notification'
 import { executeClientTool, type ClientToolRequest } from '../utils/client-tools'
 import { getRegenerationDeepThinkingEnabled } from '../utils/message-edit'
 import { findMessageInsertionIndex } from '../utils/message-order'
@@ -59,11 +63,23 @@ type ChatState = {
   activeStreamingConversationId: string
   activeStreamingMessageId: string
   loadConversations: (silent?: boolean) => Promise<void>
-  createConversation: (initialMessage?: string, knowledgeBaseId?: string | null, projectId?: string | null, consumeDraft?: boolean, preserveMessages?: boolean) => Promise<CreateConversationResponse>
+  createConversation: (
+    initialMessage?: string,
+    knowledgeBaseId?: string | null,
+    projectId?: string | null,
+    consumeDraft?: boolean,
+    preserveMessages?: boolean
+  ) => Promise<CreateConversationResponse>
   startNewConversation: () => void
   startNewProjectConversation: (projectId: string) => void
   selectConversation: (conversationId: string) => Promise<boolean>
-  sendMessage: (content: string, fileIds?: string[], fileList?: MessageFile[], knowledgeBaseId?: string, deepThinkingEnabled?: boolean) => Promise<SendResult>
+  sendMessage: (
+    content: string,
+    fileIds?: string[],
+    fileList?: MessageFile[],
+    knowledgeBaseId?: string,
+    deepThinkingEnabled?: boolean
+  ) => Promise<SendResult>
   stopStreaming: () => Promise<void>
   detachActiveStream: () => void
   resumeCurrentStream: () => void
@@ -117,7 +133,9 @@ export const useChatStore = create<ChatState>((set, get) => {
 
   function updateMessageState(messageId: string, updater: (message: Message) => Message) {
     set((state) => ({
-      messages: state.messages.map((message) => message.id === messageId ? updater(message) : message)
+      messages: state.messages.map((message) =>
+        message.id === messageId ? updater(message) : message
+      )
     }))
   }
 
@@ -149,9 +167,9 @@ export const useChatStore = create<ChatState>((set, get) => {
       optimisticGeneratingConversations.delete(conversationId)
     }
     set((state) => ({
-      conversations: state.conversations.map((conversation) => conversation.id === conversationId
-        ? { ...conversation, isGenerating }
-        : conversation)
+      conversations: state.conversations.map((conversation) =>
+        conversation.id === conversationId ? { ...conversation, isGenerating } : conversation
+      )
     }))
     scheduleConversationStatusPoll()
   }
@@ -190,9 +208,9 @@ export const useChatStore = create<ChatState>((set, get) => {
   }
 
   function findGeneratingAssistantMessage() {
-    return [...get().messages].reverse().find(
-      (message) => message.role === 'assistant' && message.status === 'generating'
-    )
+    return [...get().messages]
+      .reverse()
+      .find((message) => message.role === 'assistant' && message.status === 'generating')
   }
 
   async function handlePrecheckError(error: unknown, conversationId: string) {
@@ -200,9 +218,11 @@ export const useChatStore = create<ChatState>((set, get) => {
     const kbStore = useKnowledgeBaseStore.getState()
     kbStore.clearSelectedKnowledgeBase()
     set((state) => ({
-      conversations: state.conversations.map((conversation) => conversation.id === conversationId
-        ? { ...conversation, knowledgeBaseId: null }
-        : conversation)
+      conversations: state.conversations.map((conversation) =>
+        conversation.id === conversationId
+          ? { ...conversation, knowledgeBaseId: null }
+          : conversation
+      )
     }))
     await Promise.all([kbStore.loadKnowledgeBases(true, true), get().loadConversations(true)])
   }
@@ -267,9 +287,13 @@ export const useChatStore = create<ChatState>((set, get) => {
     function canHandleTool(request: ClientToolRequest) {
       if (request.conversationId !== conversationId) return false
       if (isCurrent()) return true
-      return get().messages.some((message) =>
-        message.id === request.messageId && message.conversationId === request.conversationId &&
-        message.role === 'assistant' && message.status === 'generating')
+      return get().messages.some(
+        (message) =>
+          message.id === request.messageId &&
+          message.conversationId === request.conversationId &&
+          message.role === 'assistant' &&
+          message.status === 'generating'
+      )
     }
 
     return {
@@ -282,7 +306,11 @@ export const useChatStore = create<ChatState>((set, get) => {
         upsertMessage(message)
         setConversationGenerating(conversationId, message.status === 'generating')
         if (message.status === 'generating') {
-          set({ activeStreamingMessageId: message.id, activeStreamingConversationId: conversationId, isSending: true })
+          set({
+            activeStreamingMessageId: message.id,
+            activeStreamingConversationId: conversationId,
+            isSending: true
+          })
         } else {
           clearActiveStream(controller)
         }
@@ -291,28 +319,61 @@ export const useChatStore = create<ChatState>((set, get) => {
       onAssistantStatus(status: StreamAssistantStatus) {
         if (!isCurrent() || get().activeConversationId !== conversationId) return
         set({ streamingStatus: status, streamingStatusText: status.text })
-        if (status.stage === 'tool' && status.toolName === 'drawImageTool' && get().activeStreamingMessageId) {
-          updateMessageState(get().activeStreamingMessageId, (message) => ({ ...message, type: 'image' }))
+        if (
+          status.stage === 'tool' &&
+          status.toolName === 'drawImageTool' &&
+          get().activeStreamingMessageId
+        ) {
+          updateMessageState(get().activeStreamingMessageId, (message) => ({
+            ...message,
+            type: 'image'
+          }))
         }
       },
       onAssistantReasoningStart({ messageId }: { messageId: string }) {
         if (!isCurrent() || get().activeConversationId !== conversationId) return
-        set({ activeStreamingMessageId: messageId, streamingStatus: { stage: 'thinking', text: '正在深度思考...' }, streamingStatusText: '正在深度思考...' })
-        updateMessageState(messageId, (message) => ({ ...message, deepThinkingEnabled: true, reasoningContent: message.reasoningContent ?? '', reasoningStatus: 'thinking' }))
+        set({
+          activeStreamingMessageId: messageId,
+          streamingStatus: { stage: 'thinking', text: t('ui.thinkingDeeply2') },
+          streamingStatusText: t('ui.thinkingDeeply2')
+        })
+        updateMessageState(messageId, (message) => ({
+          ...message,
+          deepThinkingEnabled: true,
+          reasoningContent: message.reasoningContent ?? '',
+          reasoningStatus: 'thinking'
+        }))
       },
       onAssistantReasoningDelta({ messageId, delta }: { messageId: string; delta: string }) {
         if (!isCurrent() || get().activeConversationId !== conversationId) return
-        pendingReasoningDeltas.set(messageId, `${pendingReasoningDeltas.get(messageId) ?? ''}${delta}`)
+        pendingReasoningDeltas.set(
+          messageId,
+          `${pendingReasoningDeltas.get(messageId) ?? ''}${delta}`
+        )
         scheduleFlush()
       },
       onAssistantReasoningDone({ messageId, content }: { messageId: string; content: string }) {
         if (!isCurrent() || get().activeConversationId !== conversationId) return
         pendingReasoningDeltas.delete(messageId)
-        set({ streamingStatus: { stage: 'reasoning', text: '深度思考完成，正在组织回答...' }, streamingStatusText: '深度思考完成，正在组织回答...' })
-        updateMessageState(messageId, (message) => ({ ...message, deepThinkingEnabled: true, reasoningContent: content, reasoningStatus: 'done', updatedAt: new Date().toISOString() }))
+        set({
+          streamingStatus: { stage: 'reasoning', text: t('ui.thinkingCompletePreparingTheAnswer') },
+          streamingStatusText: t('ui.thinkingCompletePreparingTheAnswer')
+        })
+        updateMessageState(messageId, (message) => ({
+          ...message,
+          deepThinkingEnabled: true,
+          reasoningContent: content,
+          reasoningStatus: 'done',
+          updatedAt: new Date().toISOString()
+        }))
       },
       onAssistantDelta(delta: string) {
-        if (!isCurrent() || get().activeConversationId !== conversationId || !get().activeStreamingMessageId) return
+        if (
+          !isCurrent() ||
+          get().activeConversationId !== conversationId ||
+          !get().activeStreamingMessageId
+        )
+          return
         set({ streamingStatus: null, streamingStatusText: '' })
         pendingAssistantDelta += delta
         scheduleFlush()
@@ -331,7 +392,11 @@ export const useChatStore = create<ChatState>((set, get) => {
         activeClientToolRequests.add(request.requestId)
         try {
           const result = await executeClientTool(request)
-          await submitClientToolResult(request.conversationId, request.messageId, { requestId: request.requestId, success: true, result })
+          await submitClientToolResult(request.conversationId, request.messageId, {
+            requestId: request.requestId,
+            success: true,
+            result
+          })
         } catch (error) {
           try {
             await submitClientToolResult(request.conversationId, request.messageId, {
@@ -359,13 +424,25 @@ export const useChatStore = create<ChatState>((set, get) => {
     const controller = new AbortController()
     startActiveStream(conversationId, controller, generatingMessage.id)
     set({
-      streamingStatus: { stage: 'thinking', text: generatingMessage.content ? '正在继续输出...' : '正在恢复输出...' },
-      streamingStatusText: generatingMessage.content ? '' : '正在恢复输出...'
+      streamingStatus: {
+        stage: 'thinking',
+        text: generatingMessage.content
+          ? t('ui.continuingTheResponse')
+          : t('ui.resumingTheResponse')
+      },
+      streamingStatusText: generatingMessage.content ? '' : t('ui.resumingTheResponse')
     })
-    void subscribeMessageStream(conversationId, generatingMessage.id, buildStreamHandlers(conversationId, controller), controller.signal)
+    void subscribeMessageStream(
+      conversationId,
+      generatingMessage.id,
+      buildStreamHandlers(conversationId, controller),
+      controller.signal
+    )
       .catch((error) => {
         if (!isAbortError(error)) {
-          updateMessageState(generatingMessage.id, (message) => message.status === 'generating' ? { ...message, status: 'failed' } : message)
+          updateMessageState(generatingMessage.id, (message) =>
+            message.status === 'generating' ? { ...message, status: 'failed' } : message
+          )
           console.error('Failed to resume message stream:', error)
         }
       })
@@ -374,7 +451,13 @@ export const useChatStore = create<ChatState>((set, get) => {
       })
   }
 
-  async function performSendMessage(content: string, fileIds?: string[], fileList?: MessageFile[], knowledgeBaseId?: string, deepThinkingEnabled?: boolean): Promise<SendResult> {
+  async function performSendMessage(
+    content: string,
+    fileIds?: string[],
+    fileList?: MessageFile[],
+    knowledgeBaseId?: string,
+    deepThinkingEnabled?: boolean
+  ): Promise<SendResult> {
     let conversationId = get().activeConversationId
     const existingMessageIds = new Set(get().messages.map((message) => message.id))
     detachActiveStream()
@@ -384,9 +467,21 @@ export const useChatStore = create<ChatState>((set, get) => {
     const now = new Date().toISOString()
     activeOptimisticUserMessageId = tempId
     set((state) => ({
-      streamingStatus: { stage: 'thinking', text: '正在思考问题...' },
-      streamingStatusText: '正在思考问题...',
-      messages: [...state.messages, { id: tempId, conversationId, role: 'user', content, fileList: fileList ?? [], status: 'completed', createdAt: now, updatedAt: now }]
+      streamingStatus: { stage: 'thinking', text: t('ui.thinkingAboutYourQuestion') },
+      streamingStatusText: t('ui.thinkingAboutYourQuestion'),
+      messages: [
+        ...state.messages,
+        {
+          id: tempId,
+          conversationId,
+          role: 'user',
+          content,
+          fileList: fileList ?? [],
+          status: 'completed',
+          createdAt: now,
+          updatedAt: now
+        }
+      ]
     }))
     if (conversationId) setConversationGenerating(conversationId, true, true)
 
@@ -421,9 +516,15 @@ export const useChatStore = create<ChatState>((set, get) => {
         startActiveStream(conversationId, controller)
         setConversationGenerating(conversationId, true, true)
       }
-      if (!conversationId) throw new Error('会话创建失败，请重试')
+      if (!conversationId) throw new Error(t('ui.failedToCreateTheConversationPleaseTryAgain'))
 
-      const input = { content, fileIds, knowledgeBaseId, deepThinkingEnabled, timeZone: getBrowserTimeZone() }
+      const input = {
+        content,
+        fileIds,
+        knowledgeBaseId,
+        deepThinkingEnabled,
+        timeZone: getBrowserTimeZone()
+      }
       if (!isCurrent()) {
         setConversationGenerating(conversationId, false)
         removeOptimisticMessage()
@@ -434,7 +535,9 @@ export const useChatStore = create<ChatState>((set, get) => {
       handlers.onUserMessage = (message: Message) => {
         taskEstablished = true
         if (activeOptimisticUserMessageId === tempId) activeOptimisticUserMessageId = ''
-        set((state) => ({ messages: state.messages.map((item) => item.id === tempId ? message : item) }))
+        set((state) => ({
+          messages: state.messages.map((item) => (item.id === tempId ? message : item))
+        }))
         void get().loadConversations(true)
       }
       streamStarted = true
@@ -451,9 +554,12 @@ export const useChatStore = create<ChatState>((set, get) => {
       const apiErrorCode = getApiErrorCode(error)
       const failedMessageId = get().activeStreamingMessageId
       if (apiErrorCode) {
-        if (failedMessageId) updateMessageState(failedMessageId, (message) => message.status === 'generating' ? { ...message, status: 'failed' } : message)
+        if (failedMessageId)
+          updateMessageState(failedMessageId, (message) =>
+            message.status === 'generating' ? { ...message, status: 'failed' } : message
+          )
         removeOptimisticMessage()
-        toast.error(error instanceof Error ? error.message : '发送消息失败')
+        toast.error(error instanceof Error ? error.message : t('ui.failedToSendTheMessage'))
         await handlePrecheckError(error, conversationId)
         setConversationGenerating(conversationId, false)
         await get().loadConversations(true)
@@ -532,25 +638,44 @@ export const useChatStore = create<ChatState>((set, get) => {
     startNewProjectConversation(projectId) {
       invalidateConversationSelection()
       detachActiveStream()
-      set({ activeConversationId: '', activeProjectId: projectId, messages: [], isLoadingMessages: false })
+      set({
+        activeConversationId: '',
+        activeProjectId: projectId,
+        messages: [],
+        isLoadingMessages: false
+      })
       useKnowledgeBaseStore.getState().clearSelectedKnowledgeBase()
     },
 
-    async createConversation(initialMessage, knowledgeBaseId, projectId, consumeDraft = false, preserveMessages = false) {
+    async createConversation(
+      initialMessage,
+      knowledgeBaseId,
+      projectId,
+      consumeDraft = false,
+      preserveMessages = false
+    ) {
       invalidateConversationSelection()
-      const result = await createConversation({ initialMessage, knowledgeBaseId, projectId, consumeDraft })
+      const result = await createConversation({
+        initialMessage,
+        knowledgeBaseId,
+        projectId,
+        consumeDraft
+      })
       set((state) => {
         const existing = state.conversations.some((item) => item.id === result.conversation.id)
         return {
           conversations: existing
-            ? state.conversations.map((item) => item.id === result.conversation.id ? { ...item, ...result.conversation } : item)
+            ? state.conversations.map((item) =>
+                item.id === result.conversation.id ? { ...item, ...result.conversation } : item
+              )
             : [result.conversation, ...state.conversations],
           activeConversationId: result.conversation.id,
           activeProjectId: result.conversation.projectId ?? '',
           messages: preserveMessages ? state.messages : []
         }
       })
-      if (!result.existed) useProjectStore.getState().adjustConversationCount(result.conversation.projectId, 1)
+      if (!result.existed)
+        useProjectStore.getState().adjustConversationCount(result.conversation.projectId, 1)
       return result
     },
 
@@ -561,18 +686,37 @@ export const useChatStore = create<ChatState>((set, get) => {
       conversationDetailAbortController = controller
       detachActiveStream()
       const conversation = get().conversations.find((item) => item.id === conversationId)
-      set({ activeConversationId: conversationId, activeProjectId: conversation?.projectId ?? '', isLoadingMessages: true })
-      const isCurrent = () => selectionSequence === conversationSelectionSequence && get().activeConversationId === conversationId && conversationDetailAbortController === controller
+      set({
+        activeConversationId: conversationId,
+        activeProjectId: conversation?.projectId ?? '',
+        isLoadingMessages: true
+      })
+      const isCurrent = () =>
+        selectionSequence === conversationSelectionSequence &&
+        get().activeConversationId === conversationId &&
+        conversationDetailAbortController === controller
 
       const kbStore = useKnowledgeBaseStore.getState()
       if (conversation?.knowledgeBaseId) {
-        if (kbStore.knowledgeBases.some((kb) => kb.id === conversation.knowledgeBaseId && kb.processingStatus === 'completed')) kbStore.selectKnowledgeBase(conversation.knowledgeBaseId)
-        else void kbStore.loadKnowledgeBases(true, true).then(() => {
-          const refreshedStore = useKnowledgeBaseStore.getState()
-          if (isCurrent() && refreshedStore.knowledgeBases.some((kb) => kb.id === conversation.knowledgeBaseId && kb.processingStatus === 'completed')) {
-            refreshedStore.selectKnowledgeBase(conversation.knowledgeBaseId!)
-          }
-        })
+        if (
+          kbStore.knowledgeBases.some(
+            (kb) => kb.id === conversation.knowledgeBaseId && kb.processingStatus === 'completed'
+          )
+        )
+          kbStore.selectKnowledgeBase(conversation.knowledgeBaseId)
+        else
+          void kbStore.loadKnowledgeBases(true, true).then(() => {
+            const refreshedStore = useKnowledgeBaseStore.getState()
+            if (
+              isCurrent() &&
+              refreshedStore.knowledgeBases.some(
+                (kb) =>
+                  kb.id === conversation.knowledgeBaseId && kb.processingStatus === 'completed'
+              )
+            ) {
+              refreshedStore.selectKnowledgeBase(conversation.knowledgeBaseId!)
+            }
+          })
       } else kbStore.clearSelectedKnowledgeBase()
 
       try {
@@ -596,7 +740,11 @@ export const useChatStore = create<ChatState>((set, get) => {
       const conversationId = get().activeConversationId
       if (!conversationId) return
       const updated = await updateConversationKnowledgeBase(conversationId, knowledgeBaseId)
-      set((state) => ({ conversations: state.conversations.map((item) => item.id === updated.id ? { ...item, ...updated } : item) }))
+      set((state) => ({
+        conversations: state.conversations.map((item) =>
+          item.id === updated.id ? { ...item, ...updated } : item
+        )
+      }))
     },
 
     async sendMessage(content, fileIds, fileList, knowledgeBaseId, deepThinkingEnabled) {
@@ -606,7 +754,13 @@ export const useChatStore = create<ChatState>((set, get) => {
       requestAssistantNotificationPermission()
       sendActionInFlight = true
       try {
-        return await performSendMessage(content, fileIds, fileList, knowledgeBaseId, deepThinkingEnabled)
+        return await performSendMessage(
+          content,
+          fileIds,
+          fileList,
+          knowledgeBaseId,
+          deepThinkingEnabled
+        )
       } finally {
         sendActionInFlight = false
       }
@@ -647,7 +801,7 @@ export const useChatStore = create<ChatState>((set, get) => {
           }
           await get().loadConversations(true)
         } catch (error) {
-          toast.error('停止生成失败，已重新连接当前回答')
+          toast.error(t('ui.failedToStopGenerationReconnectedToTheCurrentResponse'))
           if (get().activeConversationId === conversationId)
             await get().selectConversation(conversationId)
         } finally {
@@ -657,15 +811,20 @@ export const useChatStore = create<ChatState>((set, get) => {
       }
       if (!conversationId || !messageId || get().isStopping) return
       set({ isStopping: true })
-      updateMessageState(messageId, (message) => ({ ...message, status: 'cancelled', updatedAt: new Date().toISOString() }))
+      updateMessageState(messageId, (message) => ({
+        ...message,
+        status: 'cancelled',
+        updatedAt: new Date().toISOString()
+      }))
       detachActiveStream()
       try {
         const result = await cancelMessageStream(conversationId, messageId)
         if (get().activeConversationId === conversationId) upsertMessage(result.assistantMessage)
         await get().loadConversations(true)
       } catch (error) {
-        toast.error('停止生成失败，已重新连接当前回答')
-        if (get().activeConversationId === conversationId) await get().selectConversation(conversationId)
+        toast.error(t('ui.failedToStopGenerationReconnectedToTheCurrentResponse'))
+        if (get().activeConversationId === conversationId)
+          await get().selectConversation(conversationId)
       } finally {
         set({ isStopping: false })
       }
@@ -680,7 +839,11 @@ export const useChatStore = create<ChatState>((set, get) => {
 
     async renameConversation(id, title) {
       const updated = await renameConversation(id, title)
-      set((state) => ({ conversations: state.conversations.map((item) => item.id === id ? { ...item, ...updated } : item) }))
+      set((state) => ({
+        conversations: state.conversations.map((item) =>
+          item.id === id ? { ...item, ...updated } : item
+        )
+      }))
     },
 
     async toggleConversationPin(id, isPinned) {
@@ -701,8 +864,11 @@ export const useChatStore = create<ChatState>((set, get) => {
       const previous = get().conversations.find((item) => item.id === id)
       const updated = await updateConversationProject(id, projectId)
       set((state) => ({
-        conversations: state.conversations.map((item) => item.id === id ? { ...item, ...updated } : item),
-        activeProjectId: state.activeConversationId === id ? updated.projectId ?? '' : state.activeProjectId
+        conversations: state.conversations.map((item) =>
+          item.id === id ? { ...item, ...updated } : item
+        ),
+        activeProjectId:
+          state.activeConversationId === id ? (updated.projectId ?? '') : state.activeProjectId
       }))
       useProjectStore.getState().adjustConversationCount(previous?.projectId ?? null, -1)
       useProjectStore.getState().adjustConversationCount(updated.projectId, 1)
@@ -721,13 +887,25 @@ export const useChatStore = create<ChatState>((set, get) => {
       const controller = new AbortController()
       startActiveStream(conversationId, controller)
       setConversationGenerating(conversationId, true, true)
-      set({ streamingStatus: { stage: 'thinking', text: '正在根据编辑内容重新生成...' }, streamingStatusText: '正在根据编辑内容重新生成...' })
+      set({
+        streamingStatus: { stage: 'thinking', text: t('ui.regeneratingFromYourEditedMessage') },
+        streamingStatusText: t('ui.regeneratingFromYourEditedMessage')
+      })
       try {
-        await regenerateMessage(conversationId, messageId, { deepThinkingEnabled, timeZone: getBrowserTimeZone() }, buildStreamHandlers(conversationId, controller), controller.signal)
+        await regenerateMessage(
+          conversationId,
+          messageId,
+          { deepThinkingEnabled, timeZone: getBrowserTimeZone() },
+          buildStreamHandlers(conversationId, controller),
+          controller.signal
+        )
       } catch (error) {
         if (!isAbortError(error)) {
           const failedId = get().activeStreamingMessageId
-          if (failedId) updateMessageState(failedId, (message) => message.status === 'generating' ? { ...message, status: 'failed' } : message)
+          if (failedId)
+            updateMessageState(failedId, (message) =>
+              message.status === 'generating' ? { ...message, status: 'failed' } : message
+            )
           console.error('Regenerate message error:', error)
           await get().loadConversations(true)
         }
@@ -750,7 +928,15 @@ export const useChatStore = create<ChatState>((set, get) => {
       activeOptimisticUserMessageId = ''
       clearConversationStatusPoll()
       conversationsRequestSequence += 1
-      set({ conversations: [], activeConversationId: '', activeProjectId: '', messages: [], isLoadingConversations: false, isLoadingMessages: false, isStopping: false })
+      set({
+        conversations: [],
+        activeConversationId: '',
+        activeProjectId: '',
+        messages: [],
+        isLoadingConversations: false,
+        isLoadingMessages: false,
+        isStopping: false
+      })
     }
   }
 })

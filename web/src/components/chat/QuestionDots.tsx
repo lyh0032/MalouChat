@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MenuOutlined } from '@ant-design/icons'
 import {
@@ -68,15 +70,16 @@ const titleVariants: Variants = {
 }
 
 export default function QuestionDots({ messages }: { messages: Message[] }) {
+  const { i18n: uiI18n } = useTranslation()
   const questions = useMemo(
     () =>
       messages
         .filter((message) => message.role === 'user')
         .map((message) => ({
           id: message.id,
-          title: markdownToPlainText(message.content) || '附件消息'
+          title: markdownToPlainText(message.content) || t('ui.messageWithAttachment')
         })),
-    [messages]
+    [messages, uiI18n.language]
   )
   const [expanded, setExpanded] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -169,20 +172,18 @@ export default function QuestionDots({ messages }: { messages: Message[] }) {
             layout="size"
             className={`question-dots-surface${expanded ? ' is-expanded' : ''}`}
             transition={{ layout: LAYOUT_SPRING }}
-            aria-label="对话问题目录"
+            aria-label={t('ui.conversationQuestions')}
           >
             <div className="question-dots-trigger-slot">
               <m.button
                 className="question-dots-trigger"
                 type="button"
-                aria-label="展开问题目录"
+                aria-label={t('ui.showConversationQuestions')}
                 aria-controls="question-title-list"
                 aria-expanded={expanded}
                 initial={false}
                 animate={
-                  expanded
-                    ? { opacity: 0, x: 5, scale: 0.86 }
-                    : { opacity: 1, x: 0, scale: 1 }
+                  expanded ? { opacity: 0, x: 5, scale: 0.86 } : { opacity: 1, x: 0, scale: 1 }
                 }
                 transition={{ duration: 0.16, ease: 'easeOut' }}
                 style={{ pointerEvents: expanded ? 'none' : 'auto' }}
@@ -211,7 +212,7 @@ export default function QuestionDots({ messages }: { messages: Message[] }) {
                       className={`question-title-item${activeIndex === index ? ' is-active' : ''}`}
                       type="button"
                       variants={titleVariants}
-                      aria-label={`跳转到问题：${question.title}`}
+                      aria-label={t('ui.jumpToQuestionValue', { v0: question.title })}
                       onMouseEnter={() => setActiveIndex(index)}
                       onMouseLeave={() => setActiveIndex(-1)}
                       onFocus={() => setActiveIndex(index)}

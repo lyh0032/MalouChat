@@ -1,7 +1,10 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../i18n'
 import { useEffect, useRef, useState } from 'react'
 import { Button, Card, Form, Input } from 'antd'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
+import LanguageSelect from '../components/LanguageSelect'
 import AuthThemeToggle from '../components/AuthThemeToggle'
 import AnimatedBackground from '../components/AnimatedBackground'
 import LiquidGlassSwitch from '../components/LiquidGlassSwitch'
@@ -30,18 +33,26 @@ type RequestError = Error & {
   }
 }
 
-const authModeOptions = [
-  { value: 'login', label: '登录' },
-  { value: 'register', label: '注册' }
-] satisfies Array<{ value: AuthMode; label: string }>
-
 export default function LoginView() {
+  const authModeOptions = [
+    { value: 'login', label: t('ui.signIn') },
+    { value: 'register', label: t('ui.register') }
+  ] satisfies Array<{ value: AuthMode; label: string }>
+
+  const { i18n: uiI18n } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const login = useAuthStore((state) => state.login)
   const loginAsGuest = useAuthStore((state) => state.loginAsGuest)
   const register = useAuthStore((state) => state.register)
   const [form] = Form.useForm<LoginFormValues & RegisterFormValues>()
+  useEffect(() => {
+    const fields = form
+      .getFieldsError()
+      .filter((field) => field.errors.length)
+      .map((field) => field.name)
+    if (fields.length) void form.validateFields(fields).catch(() => undefined)
+  }, [form, uiI18n.language])
   const [submitting, setSubmitting] = useState(false)
   const [guestSubmitting, setGuestSubmitting] = useState(false)
   const guestLoginInFlightRef = useRef(false)
@@ -51,13 +62,13 @@ export default function LoginView() {
   const intro = isRegisterMode
     ? {
         eyebrow: 'Create Account',
-        title: '创建你的 MalouChat 账号',
-        description: '注册后即可保存聊天历史和长期记忆。'
+        title: t('ui.createYourMalouchatAccount'),
+        description: t('ui.registerToSaveConversationsAndLongTermMemories')
       }
     : {
         eyebrow: 'AI Chat Workspace',
-        title: '登录到 MalouChat',
-        description: '继续查看历史会话、个性记忆和聊天记录。'
+        title: t('ui.signInToMalouchat'),
+        description: t('ui.continueWithYourConversationsAndPersonalizedMemories')
       }
 
   useEffect(() => {
@@ -91,11 +102,11 @@ export default function LoginView() {
       const errorCode = requestError.payload?.errorCode
 
       if (!isRegisterMode && requestError.status === 401) {
-        form.setFields([{ name: 'password', errors: ['账号或密码错误'] }])
+        form.setFields([{ name: 'password', errors: [t('ui.incorrectUsernameOrPassword')] }])
       } else if (errorCode === 'EMAIL_TAKEN') {
-        form.setFields([{ name: 'email', errors: ['邮箱已被使用'] }])
+        form.setFields([{ name: 'email', errors: [t('ui.thisEmailIsAlreadyInUse')] }])
       } else if (errorCode === 'USERNAME_TAKEN') {
-        form.setFields([{ name: 'username', errors: ['用户名已被使用'] }])
+        form.setFields([{ name: 'username', errors: [t('ui.thisUsernameIsAlreadyInUse')] }])
       }
     } finally {
       setSubmitting(false)
@@ -120,7 +131,10 @@ export default function LoginView() {
   return (
     <div className="auth-scene">
       <AnimatedBackground />
-      <AuthThemeToggle />
+      <div className="auth-preferences">
+        <LanguageSelect />
+        <AuthThemeToggle />
+      </div>
 
       <main className="auth-page">
         <div className="auth-shell">
@@ -132,7 +146,7 @@ export default function LoginView() {
               value={authMode}
               options={authModeOptions}
               onChange={handleAuthModeChange}
-              ariaLabel="认证方式"
+              ariaLabel={t('ui.authenticationMethod')}
             />
 
             <div className="auth-card-intro">
@@ -151,52 +165,54 @@ export default function LoginView() {
               {isRegisterMode ? (
                 <>
                   <Form.Item
-                    label="邮箱"
+                    label={t('ui.email')}
                     name="email"
                     rules={[
-                      { required: true, message: '请输入邮箱' },
-                      { type: 'email', message: '邮箱格式不正确' }
+                      { required: true, message: t('ui.enterYourEmail') },
+                      { type: 'email', message: t('ui.enterAValidEmailAddress') }
                     ]}
                   >
-                    <Input placeholder="请输入邮箱" autoComplete="email" />
+                    <Input placeholder={t('ui.enterYourEmail')} autoComplete="email" />
                   </Form.Item>
                   <Form.Item
-                    label="用户名"
+                    label={t('ui.username')}
                     name="username"
                     rules={[
-                      { required: true, message: '请输入用户名' },
-                      { min: 3, max: 24, message: '用户名长度应在 3 到 24 位之间' },
+                      { required: true, message: t('ui.enterYourUsername') },
+                      { min: 3, max: 24, message: t('ui.usernameMustBe3To24Characters') },
                       {
                         validator: (_, value: string) =>
                           /^visitor_\d+$/i.test(value?.trim() || '')
-                            ? Promise.reject(new Error('Visitor_数字格式为系统访客保留'))
+                            ? Promise.reject(
+                                new Error(t('ui.theVisitorNumberFormatIsReservedForGuestAccounts'))
+                              )
                             : Promise.resolve()
                       }
                     ]}
                   >
-                    <Input placeholder="请输入用户名" autoComplete="username" />
+                    <Input placeholder={t('ui.enterYourUsername')} autoComplete="username" />
                   </Form.Item>
                 </>
               ) : (
                 <Form.Item
-                  label="邮箱或用户名"
+                  label={t('ui.emailOrUsername')}
                   name="emailOrUsername"
-                  rules={[{ required: true, message: '请输入邮箱或用户名' }]}
+                  rules={[{ required: true, message: t('ui.enterYourEmailOrUsername') }]}
                 >
-                  <Input placeholder="请输入邮箱或用户名" autoComplete="username" />
+                  <Input placeholder={t('ui.enterYourEmailOrUsername')} autoComplete="username" />
                 </Form.Item>
               )}
 
               <Form.Item
-                label="密码"
+                label={t('ui.password')}
                 name="password"
                 rules={[
-                  { required: true, message: '请输入密码' },
-                  { min: 3, max: 128, message: '密码长度应在 3 到 128 位之间' }
+                  { required: true, message: t('ui.enterYourPassword') },
+                  { min: 3, max: 128, message: t('ui.passwordMustBe3To128Characters') }
                 ]}
               >
                 <Input.Password
-                  placeholder="请输入密码"
+                  placeholder={t('ui.enterYourPassword')}
                   autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
                 />
               </Form.Item>
@@ -209,7 +225,7 @@ export default function LoginView() {
                   loading={submitting}
                   block
                 >
-                  注册
+                  {t('ui.register')}
                 </Button>
               ) : (
                 <div className="auth-card-actions">
@@ -220,7 +236,7 @@ export default function LoginView() {
                     disabled={submitting}
                     onClick={() => void handleGuestLogin()}
                   >
-                    访客登录
+                    {t('ui.continueAsGuest')}
                   </Button>
                   <Button
                     className="auth-card-submit"
@@ -229,7 +245,7 @@ export default function LoginView() {
                     loading={submitting}
                     disabled={guestSubmitting}
                   >
-                    登录
+                    {t('ui.signIn')}
                   </Button>
                 </div>
               )}
@@ -238,7 +254,7 @@ export default function LoginView() {
 
           <Link className="auth-architecture-entry" to="/architecture">
             <span className="auth-architecture-entry-dot" />
-            <span>查看产品与技术架构</span>
+            <span>{t('ui.exploreTheProductAndArchitecture')}</span>
           </Link>
         </div>
       </main>

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useEffect, useState } from 'react'
 import { Button, Image, Progress, Spin } from 'antd'
 import { CloseOutlined, FileOutlined } from '@ant-design/icons'
@@ -29,6 +31,7 @@ export default function ComposerAttachmentPreview({
   alwaysShowRemove,
   onRemove
 }: Props) {
+  useTranslation()
   const attachment = uploading ?? file
   const [resolvedPreviewUrl, setResolvedPreviewUrl] = useState('')
 
@@ -75,12 +78,15 @@ export default function ComposerAttachmentPreview({
   if (!attachment) return null
 
   const isImage = attachment.kind === 'image'
-  const name = uploading?.name ?? file?.originalName ?? '附件'
+  const name = uploading?.name ?? file?.originalName ?? t('ui.attachment')
 
   return (
     <div
       className={`composer-attachment-card composer-attachment-card--${isImage ? 'image' : 'file'}${alwaysShowRemove ? ' is-mobile' : ''}`}
-      aria-label={`${isImage ? '图片' : '附件'}：${name}`}
+      aria-label={t('ui.valueValue', {
+        v0: isImage ? t('ui.images') : t('ui.attachment'),
+        v1: name
+      })}
     >
       {isImage ? (
         <div className="composer-attachment-media">
@@ -106,7 +112,10 @@ export default function ComposerAttachmentPreview({
       )}
 
       {uploading ? (
-        <div className="composer-attachment-progress" aria-label={`正在上传 ${uploadProgress}%`}>
+        <div
+          className="composer-attachment-progress"
+          aria-label={t('ui.uploadingValue', { v0: uploadProgress })}
+        >
           <Progress
             type="circle"
             percent={uploadProgress}
@@ -121,7 +130,7 @@ export default function ComposerAttachmentPreview({
           type="text"
           loading={deleting}
           icon={<CloseOutlined />}
-          aria-label="移除附件"
+          aria-label={t('ui.removeAttachment')}
           onClick={onRemove}
         />
       ) : null}

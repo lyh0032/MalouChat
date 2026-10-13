@@ -1,3 +1,6 @@
+import { localizeErrorMessage } from '../i18n/errors'
+import { useTranslation } from 'react-i18next'
+import { t, getUiLanguage } from '../i18n'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   App as AntApp,
@@ -54,22 +57,8 @@ import '../components/management/ManagementPageLayout.css'
 
 type StatusFilter = 'all' | 'completed' | 'processing' | 'failed'
 
-const statusOptions: Array<{ label: string; value: StatusFilter }> = [
-  { label: '全部', value: 'all' },
-  { label: '已完成', value: 'completed' },
-  { label: '处理中', value: 'processing' },
-  { label: '失败', value: 'failed' }
-]
-
-const statusLabels: Record<KnowledgeBaseStatus, string> = {
-  queued: '排队中',
-  processing: '处理中',
-  completed: '已完成',
-  failed: '处理失败'
-}
-
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(getUiLanguage(), {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -79,7 +68,7 @@ function formatDate(value: string) {
 }
 
 function formatSize(bytes: number | null) {
-  if (bytes == null) return '无附件'
+  if (bytes == null) return t('ui.noAttachment')
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -93,6 +82,20 @@ function statusIcon(status: KnowledgeBaseStatus): ReactNode {
 }
 
 export default function KnowledgeBaseView() {
+  const statusOptions: Array<{ label: string; value: StatusFilter }> = [
+    { label: t('ui.all'), value: 'all' },
+    { label: t('ui.completed'), value: 'completed' },
+    { label: t('ui.processing'), value: 'processing' },
+    { label: t('ui.failed'), value: 'failed' }
+  ]
+  const statusLabels: Record<KnowledgeBaseStatus, string> = {
+    queued: t('ui.queued'),
+    processing: t('ui.processing'),
+    completed: t('ui.completed'),
+    failed: t('ui.processingFailed')
+  }
+
+  useTranslation()
   const navigate = useNavigate()
   const { message, modal } = AntApp.useApp()
   const isMobile = useMobile()
@@ -141,10 +144,10 @@ export default function KnowledgeBaseView() {
     ).length
     const failed = knowledgeBases.filter((item) => item.processingStatus === 'failed').length
     return [
-      { label: '总数', count: knowledgeBases.length },
-      { label: '可用', count: completed },
-      { label: '处理中', count: processing },
-      { label: '失败', count: failed }
+      { label: t('ui.total'), count: knowledgeBases.length },
+      { label: t('ui.ready'), count: completed },
+      { label: t('ui.processing'), count: processing },
+      { label: t('ui.failed'), count: failed }
     ]
   }, [knowledgeBases])
 
@@ -172,7 +175,7 @@ export default function KnowledgeBaseView() {
 
   function openCreateEditor() {
     if (userType === 'guest') {
-      void message.info('访客账号暂不支持新建知识库，请注册或登录正式账号后使用')
+      void message.info(t('ui.signInOrRegisterToCreateAKnowledgeBaseGuestAccounts'))
       return
     }
 
@@ -184,45 +187,52 @@ export default function KnowledgeBaseView() {
       const record = await updateKnowledgeBase(editingKnowledgeBase.id, input)
       setEditorTarget(null)
       setDetailId(record.id)
-      void message.success('知识库已更新，正在同步索引')
+      void message.success(t('ui.knowledgeBaseUpdatedSyncingTheIndex'))
       return
     }
 
     const record = await createKnowledgeBase(input)
     setEditorTarget(null)
     setDetailId(record.id)
-    void message.success('知识库已创建，正在后台处理')
+    void message.success(t('ui.knowledgeBaseCreatedProcessingInTheBackground'))
   }
 
   function confirmDelete(record: KnowledgeBaseRecord) {
     modal.confirm({
-      title: '删除知识库',
-      content: '删除后知识库内容和附件都会被清理，确认删除吗？',
-      okText: '删除',
-      cancelText: '取消',
+      title: t('ui.deleteKnowledgeBase'),
+      content: t('ui.deleteThisKnowledgeBaseAndAllItsContentAndAttachments'),
+      okText: t('ui.delete'),
+      cancelText: t('ui.cancel'),
       okButtonProps: { danger: true },
       async onOk() {
         await deleteKnowledgeBase(record.id)
         if (detailId === record.id) setDetailId('')
-        void message.success('知识库已删除')
+        void message.success(t('ui.knowledgeBaseDeleted'))
       }
     })
   }
 
   function confirmVisibility(record: KnowledgeBaseRecord, visibility: KnowledgeBaseVisibility) {
     modal.confirm({
-      title: visibility === 'team' ? '设为团队知识库' : '设为私有知识库',
+      title:
+        visibility === 'team'
+          ? t('ui.makeThisATeamKnowledgeBase')
+          : t('ui.makeThisAPrivateKnowledgeBase'),
       content:
         visibility === 'team'
-          ? '设为团队后，你可以邀请其他用户共同引用该知识库。确认设置为团队知识库吗？'
-          : '设为私有后，所有团队成员会被移除，他们会话中绑定的该知识库也会自动解除。确认设置为私有吗？',
-      okText: visibility === 'team' ? '设为团队' : '设为私有',
-      cancelText: '取消',
+          ? t('ui.aTeamKnowledgeBaseLetsYouInviteOthersToUseIt')
+          : t('ui.makingThisPrivateWillRemoveAllMembersAndUnlinkItFrom'),
+      okText: visibility === 'team' ? t('ui.makeTeam') : t('ui.makePrivate'),
+      cancelText: t('ui.cancel'),
       async onOk() {
         const updated = await updateKnowledgeBaseVisibility(record.id, visibility)
         replaceKnowledgeBase(updated)
         if (visibility === 'private') markConversationBindingsDirty()
-        void message.success(visibility === 'team' ? '已设为团队知识库' : '已设为私有知识库')
+        void message.success(
+          visibility === 'team'
+            ? t('ui.changedToATeamKnowledgeBase')
+            : t('ui.changedToAPrivateKnowledgeBase')
+        )
       }
     })
   }
@@ -262,11 +272,14 @@ export default function KnowledgeBaseView() {
         setInviteOpen(false)
         void message.success(
           skippedCount > 0
-            ? `已发送 ${result.createdCount} 个邀请，跳过 ${skippedCount} 个重复用户`
-            : '邀请已发送'
+            ? t('ui.sentValueInvitationsAndSkippedValueDuplicates', {
+                v0: result.createdCount,
+                v1: skippedCount
+              })
+            : t('ui.invitationSent')
         )
       } else {
-        void message.warning('所选用户已在团队中或已有待处理邀请')
+        void message.warning(t('ui.selectedUsersAreAlreadyMembersOrHavePendingInvitations'))
       }
     } finally {
       setInviteSubmitting(false)
@@ -289,40 +302,40 @@ export default function KnowledgeBaseView() {
     await removeKnowledgeBaseMember(activeTeamKnowledgeBase.id, member.id)
     setTeamMembers((members) => members.filter((item) => item.id !== member.id))
     await loadKnowledgeBases(true, true)
-    void message.success('成员已移除')
+    void message.success(t('ui.memberRemoved'))
   }
 
   function confirmLeave(record: KnowledgeBaseRecord) {
     modal.confirm({
-      title: '退出团队知识库',
-      content: '退出后该知识库将不再出现在你的列表中，确认退出吗？',
-      okText: '退出',
-      cancelText: '取消',
+      title: t('ui.leaveTeamKnowledgeBase'),
+      content: t('ui.thisKnowledgeBaseWillBeRemovedFromYourListLeaveIt'),
+      okText: t('ui.leave'),
+      cancelText: t('ui.cancel'),
       okButtonProps: { danger: true },
       async onOk() {
         await leaveKnowledgeBase(record.id)
         removeKnowledgeBaseLocally(record.id, true)
-        void message.success('已退出团队知识库')
+        void message.success(t('ui.leftTheTeamKnowledgeBase'))
       }
     })
   }
 
   function menuItems(record: KnowledgeBaseRecord): MenuProps['items'] {
-    if (record.role === 'member') return [{ key: 'leave', label: '退出', danger: true }]
+    if (record.role === 'member') return [{ key: 'leave', label: t('ui.leave'), danger: true }]
     return [
-      { key: 'edit', label: '更新' },
+      { key: 'edit', label: t('ui.update') },
       {
         key: record.visibility === 'private' ? 'team' : 'private',
-        label: record.visibility === 'private' ? '设为团队' : '设为私有'
+        label: record.visibility === 'private' ? t('ui.makeTeam') : t('ui.makePrivate')
       },
       ...(record.visibility === 'team'
         ? [
-            { key: 'invite', label: '邀请用户' },
-            { key: 'members', label: '管理成员' }
+            { key: 'invite', label: t('ui.inviteUsers') },
+            { key: 'members', label: t('ui.manageMembers') }
           ]
         : []),
       { type: 'divider' },
-      { key: 'delete', label: '删除', danger: true }
+      { key: 'delete', label: t('ui.delete'), danger: true }
     ]
   }
 
@@ -341,8 +354,8 @@ export default function KnowledgeBaseView() {
         isMobile={isMobile}
         isOpen={isSidebarOpen}
         activeItem="knowledge-bases"
-        summaryTitle="知识库中心"
-        summaryText={`${knowledgeBases.length} 个知识库`}
+        summaryTitle={t('ui.knowledgeBaseHub')}
+        summaryText={t('counts.knowledgeBases', { count: knowledgeBases.length })}
         icon={<DatabaseOutlined />}
         stats={stats.map((item) => (
           <article key={item.label} className="management-sidebar-stat">
@@ -358,9 +371,12 @@ export default function KnowledgeBaseView() {
         <header className="knowledge-layout-header management-page-header">
           <div className="knowledge-layout-header-main management-page-header-main">
             {isMobile ? (
-              <ManagementSidebarToggle label="打开侧边菜单" onClick={() => setSidebarOpen(true)} />
+              <ManagementSidebarToggle
+                label={t('ui.openSidebar')}
+                onClick={() => setSidebarOpen(true)}
+              />
             ) : null}
-            <h2>知识库管理</h2>
+            <h2>{t('ui.knowledgeBaseManagement')}</h2>
           </div>
           <ManagementHeaderActions onCreate={openCreateEditor} />
         </header>
@@ -372,27 +388,29 @@ export default function KnowledgeBaseView() {
             value={statusFilter}
             onChange={setStatusFilter}
           />
-          <span>{filteredKnowledgeBases.length} 项</span>
+          <span>{t('counts.items', { count: filteredKnowledgeBases.length })}</span>
         </section>
 
         <section className="knowledge-layout-content">
           <Spin spinning={isLoading}>
             {!isLoading && knowledgeBases.length === 0 ? (
               <div className="knowledge-layout-state">
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="还没有知识库">
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={openCreateEditor}
-                  >
-                    新建知识库
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={t('ui.noKnowledgeBasesYet')}
+                >
+                  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateEditor}>
+                    {t('ui.newKnowledgeBase')}
                   </Button>
                 </Empty>
               </div>
             ) : !isLoading && filteredKnowledgeBases.length === 0 ? (
               <div className="knowledge-layout-state">
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前筛选下没有结果">
-                  <Button onClick={() => setStatusFilter('all')}>查看全部</Button>
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={t('ui.noResultsForThisFilter')}
+                >
+                  <Button onClick={() => setStatusFilter('all')}>{t('ui.viewAll')}</Button>
                 </Empty>
               </div>
             ) : (
@@ -413,12 +431,12 @@ export default function KnowledgeBaseView() {
                         <span
                           className={`knowledge-card-badge knowledge-card-badge--${record.visibility}`}
                         >
-                          {record.visibility === 'team' ? '团队' : '私有'}
+                          {record.visibility === 'team' ? t('ui.team') : t('ui.private')}
                         </span>
                         <span
                           className={`knowledge-card-badge knowledge-card-badge--${record.role}`}
                         >
-                          {record.role === 'owner' ? '创建者' : '成员'}
+                          {record.role === 'owner' ? t('ui.owner') : t('ui.member')}
                         </span>
                       </div>
                       <span
@@ -432,15 +450,19 @@ export default function KnowledgeBaseView() {
                     <p className="knowledge-card-content">{record.content}</p>
                     <div className="knowledge-card-meta">
                       <span>
-                        <FileTextOutlined /> {record.attachmentName || '仅文本内容'}
+                        <FileTextOutlined /> {record.attachmentName || t('ui.textOnly')}
                       </span>
                       <small>{formatSize(record.attachmentSize)}</small>
                     </div>
                     {record.processingStatus === 'failed' && record.processingError ? (
-                      <div className="knowledge-card-error">{record.processingError}</div>
+                      <div className="knowledge-card-error">
+                        {localizeErrorMessage(record.processingError, 'KNOWLEDGE_BASE_NOT_READY')}
+                      </div>
                     ) : null}
                     <footer className="knowledge-card-footer">
-                      <time dateTime={record.updatedAt}>更新于 {formatDate(record.updatedAt)}</time>
+                      <time dateTime={record.updatedAt}>
+                        {t('dates.updated', { date: formatDate(record.updatedAt) })}
+                      </time>
                       <Dropdown
                         trigger={['click']}
                         placement="bottomRight"
@@ -457,7 +479,7 @@ export default function KnowledgeBaseView() {
                           type="text"
                           shape="circle"
                           icon={<MoreOutlined />}
-                          aria-label="知识库操作"
+                          aria-label={t('ui.knowledgeBaseActions')}
                           onClick={(event) => event.stopPropagation()}
                         />
                       </Dropdown>
@@ -483,12 +505,13 @@ export default function KnowledgeBaseView() {
       />
 
       <Modal
+        closable={{ 'aria-label': t('ui.close') }}
         open={inviteOpen}
-        title="邀请团队成员"
+        title={t('ui.inviteTeamMembers')}
         width={560}
         centered
-        okText="发送邀请"
-        cancelText="取消"
+        okText={t('ui.sendInvitations')}
+        cancelText={t('ui.cancel')}
         confirmLoading={inviteSubmitting}
         okButtonProps={{ disabled: selectedInviteUserIds.length === 0 }}
         onOk={() => void sendInvitations()}
@@ -498,9 +521,9 @@ export default function KnowledgeBaseView() {
           <Input.Search
             value={userSearchKeyword}
             loading={userSearchLoading}
-            placeholder="搜索用户名或邮箱"
+            placeholder={t('ui.searchUsernameOrEmail')}
             allowClear
-            enterButton="搜索"
+            enterButton={t('ui.search')}
             onChange={(event) => setUserSearchKeyword(event.target.value)}
             onSearch={() => void handleSearchUsers()}
           />
@@ -520,15 +543,19 @@ export default function KnowledgeBaseView() {
                 ))}
               </Checkbox.Group>
             ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="搜索后选择要邀请的用户" />
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={t('ui.searchAndSelectUsersToInvite')}
+              />
             )}
           </Spin>
         </div>
       </Modal>
 
       <Modal
+        closable={{ 'aria-label': t('ui.close') }}
         open={memberOpen}
-        title="团队成员"
+        title={t('ui.teamMembers')}
         width={560}
         centered
         footer={null}
@@ -544,12 +571,12 @@ export default function KnowledgeBaseView() {
                     <small>{member.email}</small>
                   </span>
                   <Button danger type="link" onClick={() => void removeMember(member)}>
-                    移除
+                    {t('ui.remove')}
                   </Button>
                 </div>
               ))
             ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="还没有成员" />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('ui.noMembersYet')} />
             )}
           </div>
         </Spin>

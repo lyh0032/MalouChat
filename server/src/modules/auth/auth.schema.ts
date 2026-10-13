@@ -1,6 +1,9 @@
 import { z } from 'zod'
 
+const languageSchema = z.enum(['zh-CN', 'en-US'])
+
 export const registerBodySchema = z.object({
+  language: languageSchema.optional(),
   email: z.string().trim().email(),
   username: z
     .string()
@@ -19,6 +22,7 @@ export const loginBodySchema = z.object({
 })
 
 export const guestLoginBodySchema = z.object({
+  language: languageSchema.optional(),
   guestKey: z.string().trim().min(32).max(256).optional()
 })
 

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t, getUiLanguage } from '../i18n'
 import { useEffect, useMemo, useState } from 'react'
 import { App as AntApp, Button, Empty, Form, Input, Modal, Select, Spin } from 'antd'
 import { DeleteOutlined, EditOutlined, ReadOutlined } from '@ant-design/icons'
@@ -13,20 +15,8 @@ import type { MemoryRecord, MemoryType, UpdateMemoryInput } from '../types/memor
 import './MemoryView.css'
 import '../components/management/ManagementPageLayout.css'
 
-const memoryTypeLabelMap: Record<MemoryType, string> = {
-  profile: '个人信息',
-  preference: '偏好',
-  summary: '总结',
-  fact: '事实'
-}
-
-const memoryTypeOptions = (Object.keys(memoryTypeLabelMap) as MemoryType[]).map((value) => ({
-  value,
-  label: memoryTypeLabelMap[value]
-}))
-
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(getUiLanguage(), {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -36,6 +26,19 @@ function formatDate(value: string) {
 }
 
 export default function MemoryView() {
+  const memoryTypeLabelMap: Record<MemoryType, string> = {
+    profile: t('ui.profile'),
+    preference: t('ui.preference'),
+    summary: t('ui.summary'),
+    fact: t('ui.fact')
+  }
+
+  const memoryTypeOptions = (Object.keys(memoryTypeLabelMap) as MemoryType[]).map((value) => ({
+    value,
+    label: memoryTypeLabelMap[value]
+  }))
+
+  const { i18n: uiI18n } = useTranslation()
   const navigate = useNavigate()
   const { modal, message } = AntApp.useApp()
   const isMobile = useMobile()
@@ -48,6 +51,13 @@ export default function MemoryView() {
   const [editingMemory, setEditingMemory] = useState<MemoryRecord | null>(null)
   const [isUpdatingMemory, setUpdatingMemory] = useState(false)
   const [form] = Form.useForm<Required<UpdateMemoryInput>>()
+  useEffect(() => {
+    const fields = form
+      .getFieldsError()
+      .filter((field) => field.errors.length)
+      .map((field) => field.name)
+    if (fields.length) void form.validateFields(fields).catch(() => undefined)
+  }, [form, uiI18n.language])
   const formValues = Form.useWatch([], form)
 
   useEffect(() => {
@@ -75,7 +85,7 @@ export default function MemoryView() {
       label: memoryTypeLabelMap[type],
       count: counts[type]
     }))
-  }, [memories])
+  }, [memories, uiI18n.language])
 
   const formChanged = Boolean(
     editingMemory &&
@@ -118,7 +128,7 @@ export default function MemoryView() {
       })
       setEditingMemory(null)
       form.resetFields()
-      void message.success('记忆已更新')
+      void message.success(t('ui.memoryUpdated'))
     } finally {
       setUpdatingMemory(false)
     }
@@ -126,14 +136,14 @@ export default function MemoryView() {
 
   function confirmDelete(memoryId: string) {
     modal.confirm({
-      title: '删除记忆',
-      content: '删除后不可恢复，确认删除这条长期记忆吗？',
-      okText: '删除',
-      cancelText: '取消',
+      title: t('ui.deleteMemory'),
+      content: t('ui.deleteThisLongTermMemoryThisCannotBeUndone'),
+      okText: t('ui.delete'),
+      cancelText: t('ui.cancel'),
       okButtonProps: { danger: true },
       async onOk() {
         await deleteMemory(memoryId)
-        void message.success('记忆已删除')
+        void message.success(t('ui.memoryDeleted'))
       }
     })
   }
@@ -141,7 +151,7 @@ export default function MemoryView() {
   const sidebarStats = (
     <>
       <article className="management-sidebar-stat">
-        <span>总记忆数</span>
+        <span>{t('ui.totalMemories')}</span>
         <strong>{memories.length}</strong>
       </article>
       {memoryStats.map((item) => (
@@ -159,8 +169,8 @@ export default function MemoryView() {
         isMobile={isMobile}
         isOpen={isSidebarOpen}
         activeItem="memories"
-        summaryTitle="长期记忆"
-        summaryText={`${memories.length} 条记忆`}
+        summaryTitle={t('ui.longTermMemories')}
+        summaryText={t('counts.memories', { count: memories.length })}
         icon={<ReadOutlined />}
         stats={sidebarStats}
         onClose={() => setSidebarOpen(false)}
@@ -171,9 +181,12 @@ export default function MemoryView() {
         <header className="memory-layout-header management-page-header">
           <div className="memory-layout-header-main management-page-header-main">
             {isMobile ? (
-              <ManagementSidebarToggle label="打开侧边菜单" onClick={() => setSidebarOpen(true)} />
+              <ManagementSidebarToggle
+                label={t('ui.openSidebar')}
+                onClick={() => setSidebarOpen(true)}
+              />
             ) : null}
-            <h2>记忆管理</h2>
+            <h2>{t('ui.memoryManagement')}</h2>
           </div>
         </header>
 
@@ -181,8 +194,15 @@ export default function MemoryView() {
           <Spin spinning={isLoading}>
             {!isLoading && memories.length === 0 ? (
               <div className="memory-layout-state">
-                <Empty description="还没有长期记忆" image={Empty.PRESENTED_IMAGE_SIMPLE}>
-                  <p>当用户在对话中表达稳定且重要的信息时，系统会自动提取并保存在这里。</p>
+                <Empty
+                  description={t('ui.noLongTermMemoriesYet')}
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                >
+                  <p>
+                    {t(
+                      'ui.stableMeaningfulInformationSharedInConversationsIsAutomaticallyExtractedAndSaved'
+                    )}
+                  </p>
                 </Empty>
               </div>
             ) : (
@@ -199,7 +219,7 @@ export default function MemoryView() {
                           icon={<EditOutlined />}
                           onClick={() => openEditDialog(memory)}
                         >
-                          编辑
+                          {t('ui.edit')}
                         </Button>
                         <Button
                           danger
@@ -207,11 +227,11 @@ export default function MemoryView() {
                           icon={<DeleteOutlined />}
                           onClick={() => confirmDelete(memory.id)}
                         >
-                          删除
+                          {t('ui.delete')}
                         </Button>
                       </div>
                       <div className="memory-card-footer">
-                        <span>更新于</span>
+                        <span>{t('ui.updated')}</span>
                         <time dateTime={memory.updatedAt}>{formatDate(memory.updatedAt)}</time>
                       </div>
                     </div>
@@ -225,15 +245,15 @@ export default function MemoryView() {
 
       <Modal
         open={Boolean(editingMemory)}
-        title="编辑记忆"
+        title={t('ui.editMemory')}
         width={560}
         centered
         mask={{ closable: false }}
         keyboard={!isUpdatingMemory}
-        closable={!isUpdatingMemory}
+        closable={isUpdatingMemory ? false : { 'aria-label': t('ui.close') }}
         confirmLoading={isUpdatingMemory}
-        okText="保存"
-        cancelText="取消"
+        okText={t('ui.save')}
+        cancelText={t('ui.cancel')}
         okButtonProps={{ disabled: !formChanged }}
         onOk={() => void submitEdit()}
         onCancel={closeEditDialog}
@@ -241,35 +261,35 @@ export default function MemoryView() {
       >
         <Form form={form} layout="vertical" className="memory-edit-form">
           <Form.Item
-            label="记忆类型"
+            label={t('ui.memoryType')}
             name="type"
-            rules={[{ required: true, message: '请选择记忆类型' }]}
+            rules={[{ required: true, message: t('ui.selectAMemoryType') }]}
           >
-            <Select options={memoryTypeOptions} placeholder="请选择记忆类型" />
+            <Select options={memoryTypeOptions} placeholder={t('ui.selectAMemoryType')} />
           </Form.Item>
           <Form.Item
-            label="记忆标识"
+            label={t('ui.memoryKey')}
             name="key"
             rules={[
-              { required: true, whitespace: true, message: '请输入记忆标识' },
-              { max: 80, message: '记忆标识不能超过 80 个字符' }
+              { required: true, whitespace: true, message: t('ui.enterAMemoryKey') },
+              { max: 80, message: t('ui.memoryKeysMustBe80CharactersOrFewer') }
             ]}
           >
-            <Input maxLength={80} showCount placeholder="例如 preferred_language" />
+            <Input maxLength={80} showCount placeholder={t('ui.eGPreferredLanguage')} />
           </Form.Item>
           <Form.Item
-            label="记忆内容"
+            label={t('ui.memoryContent')}
             name="content"
             rules={[
-              { required: true, whitespace: true, message: '请输入记忆内容' },
-              { max: 2000, message: '记忆内容不能超过 2000 个字符' }
+              { required: true, whitespace: true, message: t('ui.enterMemoryContent') },
+              { max: 2000, message: t('ui.memoryContentMustBe2000CharactersOrFewer') }
             ]}
           >
             <Input.TextArea
               maxLength={2000}
               showCount
               rows={7}
-              placeholder="请输入需要长期保留的记忆内容"
+              placeholder={t('ui.enterInformationToRememberLongTerm')}
             />
           </Form.Item>
         </Form>

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Tooltip } from 'antd'
 import { DownOutlined, MenuOutlined, PlusOutlined } from '@ant-design/icons'
@@ -49,6 +51,7 @@ type Props = {
 }
 
 export default function ChatMainPanel(props: Props) {
+  useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [showScrollBottom, setShowScrollBottom] = useState(false)
   const autoScrollRef = useRef(true)
@@ -114,16 +117,16 @@ export default function ChatMainPanel(props: Props) {
               className="chat-layout-icon-button"
               shape="circle"
               icon={<MenuOutlined />}
-              aria-label="打开菜单"
+              aria-label={t('ui.openMenu')}
               onClick={props.onOpenSidebar}
             />
           ) : null}
           {props.activeProject && props.activeConversation ? (
-            <Tooltip title={`返回项目：${props.activeProject.title}`}>
+            <Tooltip title={t('ui.backToProjectValue', { v0: props.activeProject.title })}>
               <button
                 className="chat-project-context"
                 type="button"
-                aria-label={`返回项目：${props.activeProject.title}`}
+                aria-label={t('ui.backToProjectValue', { v0: props.activeProject.title })}
                 onClick={() => props.onSelectProject(props.activeProject!.id)}
               >
                 <i style={{ color: props.activeProject.iconColor }}>
@@ -139,7 +142,7 @@ export default function ChatMainPanel(props: Props) {
               className="chat-layout-icon-button"
               shape="circle"
               icon={<PlusOutlined />}
-              aria-label="新建对话"
+              aria-label={t('ui.newChat')}
               onClick={props.onCreateConversation}
             />
           ) : null}
@@ -189,7 +192,7 @@ export default function ChatMainPanel(props: Props) {
             className="chat-layout-scroll-bottom-positioner"
             shape="circle"
             icon={<DownOutlined />}
-            aria-label="滚动到底部"
+            aria-label={t('ui.scrollToBottom')}
             onClick={scrollBottom}
           />
         ) : null}

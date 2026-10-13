@@ -1,3 +1,5 @@
+import { localizeErrorMessage } from '../i18n/errors'
+import { t } from '../i18n'
 import { clearStoredToken, getStoredToken, setStoredToken } from '../utils/token'
 import { toast } from '../utils/toast'
 import type { ApiErrorResponse, ApiResponse } from '../types/api'
@@ -41,14 +43,14 @@ async function requestNewAccessToken(): Promise<string> {
   })
 
   if (!response.ok) {
-    throw new Error('登录已过期')
+    throw new Error(t('ui.yourSessionHasExpired'))
   }
 
   const payload = await parseResponseBody<ApiResponse<{ token: string }>>(response)
   const accessToken = payload.data.token
 
   if (!accessToken) {
-    throw new Error('刷新 Token 响应无效')
+    throw new Error(t('ui.invalidTokenRefreshResponse'))
   }
 
   setStoredToken(accessToken)
@@ -87,7 +89,7 @@ export async function ensureFreshAccessToken(): Promise<void> {
     await refreshAccessToken()
   } catch {
     handleUnauthorized()
-    throw new Error('登录已过期，请重新登录')
+    throw new Error(t('ui.yourSessionHasExpiredPleaseSignInAgain'))
   }
 }
 
@@ -130,8 +132,12 @@ function buildUrl(path: string, params?: Record<string, unknown>): string {
 
 async function handleErrorResponse(response: Response): Promise<never> {
   const payload = await parseResponseBody<ApiErrorResponse | string | null>(response)
-  const message =
-    typeof payload === 'string' ? payload || '请求失败' : payload?.message || '请求失败'
+  const message = localizeErrorMessage(
+    typeof payload === 'string'
+      ? payload || t('ui.requestFailed')
+      : payload?.message || t('ui.requestFailed'),
+    typeof payload === 'object' && payload ? payload.errorCode : undefined
+  )
 
   toast.error(message)
 
@@ -210,8 +216,12 @@ async function request<T>(method: string, path: string, options: RequestOptions 
 
     if (options.suppressToast) {
       const payload = await parseResponseBody<ApiErrorResponse | string | null>(response)
-      const message =
-        typeof payload === 'string' ? payload || '请求失败' : payload?.message || '请求失败'
+      const message = localizeErrorMessage(
+        typeof payload === 'string'
+          ? payload || t('ui.requestFailed')
+          : payload?.message || t('ui.requestFailed'),
+        typeof payload === 'object' && payload ? payload.errorCode : undefined
+      )
       const error = new Error(message) as Error & {
         status: number
         payload: ApiErrorResponse | string | null
@@ -246,12 +256,14 @@ export async function ensureFetchResponseOk(response: Response, fallbackMessage:
 
   if (response.status === 401) {
     handleUnauthorized()
-    throw new Error('未登录或登录已过期')
+    throw new Error(t('ui.pleaseSignInToContinue'))
   }
 
   const payload = await parseResponseBody<ApiErrorResponse | string | null>(response)
-  const message =
-    typeof payload === 'string' ? payload || fallbackMessage : payload?.message || fallbackMessage
+  const message = localizeErrorMessage(
+    typeof payload === 'string' ? payload || fallbackMessage : payload?.message || fallbackMessage,
+    typeof payload === 'object' && payload ? payload.errorCode : undefined
+  )
 
   toast.error(message)
   throw new Error(message)

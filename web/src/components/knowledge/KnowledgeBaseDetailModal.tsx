@@ -1,16 +1,12 @@
+import { localizeErrorMessage } from '../../i18n/errors'
+import { useTranslation } from 'react-i18next'
+import { t, getUiLanguage } from '../../i18n'
 import { FileTextOutlined } from '@ant-design/icons'
 import { Modal } from 'antd'
 
 import type { KnowledgeBaseRecord, KnowledgeBaseStatus } from '../../types/knowledge-base'
 
 import './KnowledgeBaseModals.css'
-
-const statusLabels: Record<KnowledgeBaseStatus, string> = {
-  queued: '排队中',
-  processing: '处理中',
-  completed: '已完成',
-  failed: '处理失败'
-}
 
 function formatSize(bytes: number | null) {
   if (bytes == null) return '-'
@@ -26,10 +22,19 @@ export default function KnowledgeBaseDetailModal({
   knowledgeBase: KnowledgeBaseRecord | null
   onClose: () => void
 }) {
+  const statusLabels: Record<KnowledgeBaseStatus, string> = {
+    queued: t('ui.queued'),
+    processing: t('ui.processing'),
+    completed: t('ui.completed'),
+    failed: t('ui.processingFailed')
+  }
+
+  useTranslation()
   return (
     <Modal
+      closable={{ 'aria-label': t('ui.close') }}
       open={Boolean(knowledgeBase)}
-      title="知识库详情"
+      title={t('ui.knowledgeBaseDetails')}
       width={600}
       centered
       footer={null}
@@ -46,14 +51,16 @@ export default function KnowledgeBaseDetailModal({
             </span>
           </div>
           {knowledgeBase.processingStatus === 'failed' && knowledgeBase.processingError ? (
-            <div className="knowledge-detail-error">{knowledgeBase.processingError}</div>
+            <div className="knowledge-detail-error">
+              {localizeErrorMessage(knowledgeBase.processingError, 'KNOWLEDGE_BASE_NOT_READY')}
+            </div>
           ) : null}
           <section>
-            <h4>内容介绍</h4>
+            <h4>{t('ui.description')}</h4>
             <p>{knowledgeBase.content}</p>
           </section>
           <section>
-            <h4>附件信息</h4>
+            <h4>{t('ui.attachmentDetails')}</h4>
             {knowledgeBase.attachmentName ? (
               <div className="knowledge-detail-attachment">
                 <FileTextOutlined />
@@ -61,16 +68,20 @@ export default function KnowledgeBaseDetailModal({
                 <small>{formatSize(knowledgeBase.attachmentSize)}</small>
               </div>
             ) : (
-              <span className="knowledge-detail-muted">无附件</span>
+              <span className="knowledge-detail-muted">{t('ui.noAttachment')}</span>
             )}
           </section>
           <section>
-            <h4>时间</h4>
+            <h4>{t('ui.dates')}</h4>
             <span className="knowledge-detail-muted">
-              创建于 {new Date(knowledgeBase.createdAt).toLocaleString()}
+              {t('dates.created', {
+                date: new Date(knowledgeBase.createdAt).toLocaleString(getUiLanguage())
+              })}
             </span>
             <span className="knowledge-detail-muted">
-              更新于 {new Date(knowledgeBase.updatedAt).toLocaleString()}
+              {t('dates.updated', {
+                date: new Date(knowledgeBase.updatedAt).toLocaleString(getUiLanguage())
+              })}
             </span>
           </section>
         </div>

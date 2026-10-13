@@ -1,3 +1,5 @@
+import { localizeErrorMessage } from '../i18n/errors'
+import { t } from '../i18n'
 import type { ApiErrorResponse, ApiResponse } from '../types/api'
 import type {
   CreateConversationInput,
@@ -46,8 +48,8 @@ type StreamFailedPayload = StreamTerminalPayload & {
 }
 
 function invalidStreamPayload(event: string, field?: string): Error {
-  const detail = field ? `，缺少或无法识别字段“${field}”` : ''
-  return new Error(`流式事件“${event}”数据无效${detail}`)
+  const detail = field ? t('ui.missingOrInvalidFieldValue', { v0: field }) : ''
+  return new Error(t('ui.invalidDataForStreamEventValueValue', { v0: event, v1: detail }))
 }
 
 function expectRecord(value: unknown, event: string): Record<string, unknown> {
@@ -133,7 +135,9 @@ function parseClientToolRequest(value: unknown, event: string): ClientToolReques
 
 function ensureTerminalEventReceived(state: StreamState, fallbackMessage: string) {
   if (!state.terminalEventReceived) {
-    throw new Error(`${fallbackMessage}：连接在收到消息终态前已结束`)
+    throw new Error(
+      t('ui.valueConnectionClosedBeforeTheFinalMessageStatusArrived', { v0: fallbackMessage })
+    )
   }
 }
 
@@ -215,7 +219,7 @@ function applyStreamEvent(
     const payloadRecord = expectRecord(parsed.data, parsed.event)
     const payload: StreamFailedPayload = {
       ...terminalPayload,
-      message: expectString(payloadRecord, 'message', parsed.event)
+      message: localizeErrorMessage(expectString(payloadRecord, 'message', parsed.event))
     }
     state.terminalEventReceived = true
     state.latestConversationId = payload.conversationId
@@ -233,7 +237,7 @@ function applyStreamEvent(
     const payload = expectRecord(parsed.data, parsed.event)
     const message = typeof payload.message === 'string' ? payload.message : fallbackMessage
     const errorCode = typeof payload.errorCode === 'string' ? payload.errorCode : undefined
-    const error = new Error(message) as Error & {
+    const error = new Error(localizeErrorMessage(message, errorCode)) as Error & {
       payload: ApiErrorResponse
     }
     error.payload = {
@@ -343,12 +347,12 @@ export async function streamMessage(
     signal
   })
 
-  await ensureFetchResponseOk(response, '流式请求失败')
+  await ensureFetchResponseOk(response, t('ui.streamingRequestFailed'))
 
   await consumeSseStream(response, (parsed) => {
-    applyStreamEvent(parsed, handlers, state, '流式请求失败')
+    applyStreamEvent(parsed, handlers, state, t('ui.streamingRequestFailed'))
   })
-  ensureTerminalEventReceived(state, '流式请求失败')
+  ensureTerminalEventReceived(state, t('ui.streamingRequestFailed'))
 
   return {
     conversationId: state.latestConversationId,
@@ -379,12 +383,12 @@ export async function subscribeMessageStream(
     }
   )
 
-  await ensureFetchResponseOk(response, '恢复流式请求失败')
+  await ensureFetchResponseOk(response, t('ui.failedToResumeTheResponse'))
 
   await consumeSseStream(response, (parsed) => {
-    applyStreamEvent(parsed, handlers, state, '恢复流式请求失败')
+    applyStreamEvent(parsed, handlers, state, t('ui.failedToResumeTheResponse'))
   })
-  ensureTerminalEventReceived(state, '恢复流式请求失败')
+  ensureTerminalEventReceived(state, t('ui.failedToResumeTheResponse'))
 
   return {
     conversationId: state.latestConversationId,
@@ -418,12 +422,12 @@ export async function regenerateMessage(
     }
   )
 
-  await ensureFetchResponseOk(response, '重新生成请求失败')
+  await ensureFetchResponseOk(response, t('ui.failedToRegenerateTheResponse'))
 
   await consumeSseStream(response, (parsed) => {
-    applyStreamEvent(parsed, handlers, state, '重新生成请求失败')
+    applyStreamEvent(parsed, handlers, state, t('ui.failedToRegenerateTheResponse'))
   })
-  ensureTerminalEventReceived(state, '重新生成请求失败')
+  ensureTerminalEventReceived(state, t('ui.failedToRegenerateTheResponse'))
 
   return {
     conversationId: state.latestConversationId,
@@ -459,7 +463,7 @@ export async function submitClientToolResult(
       body: JSON.stringify(input)
     }
   )
-  await ensureFetchResponseOk(response, '提交客户端工具结果失败')
+  await ensureFetchResponseOk(response, t('ui.failedToSubmitTheClientToolResult'))
 }
 
 export async function updateMessage(
@@ -474,9 +478,6 @@ export async function updateMessage(
   return response.data.data
 }
 
-export async function deleteMessage(
-  conversationId: string,
-  messageId: string
-): Promise<void> {
+export async function deleteMessage(conversationId: string, messageId: string): Promise<void> {
   await http.delete(`/conversations/${conversationId}/messages/${messageId}`)
 }

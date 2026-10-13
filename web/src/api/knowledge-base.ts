@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import { ensureFetchResponseOk, fetchWithAuth } from './http'
 import type {
   CreateKnowledgeBaseInput,
@@ -10,12 +11,14 @@ import type {
 
 export async function fetchKnowledgeBases(): Promise<KnowledgeBaseRecord[]> {
   const response = await fetchWithAuth('/knowledge-bases', { method: 'GET' })
-  await ensureFetchResponseOk(response, '获取知识库列表失败')
+  await ensureFetchResponseOk(response, t('ui.failedToLoadKnowledgeBases'))
   const json = await response.json()
   return json.data.knowledgeBases as KnowledgeBaseRecord[]
 }
 
-export async function createKnowledgeBase(input: CreateKnowledgeBaseInput): Promise<KnowledgeBaseRecord> {
+export async function createKnowledgeBase(
+  input: CreateKnowledgeBaseInput
+): Promise<KnowledgeBaseRecord> {
   const formData = new FormData()
   formData.append('title', input.title)
   formData.append('content', input.content)
@@ -30,7 +33,7 @@ export async function createKnowledgeBase(input: CreateKnowledgeBaseInput): Prom
     body: formData
   })
 
-  await ensureFetchResponseOk(response, '创建知识库失败')
+  await ensureFetchResponseOk(response, t('ui.failedToCreateTheKnowledgeBase'))
   const json = await response.json()
   return json.data as KnowledgeBaseRecord
 }
@@ -53,7 +56,7 @@ export async function updateKnowledgeBase(
     body: formData
   })
 
-  await ensureFetchResponseOk(response, '更新知识库失败')
+  await ensureFetchResponseOk(response, t('ui.failedToUpdateTheKnowledgeBase'))
   const json = await response.json()
   return json.data as KnowledgeBaseRecord
 }
@@ -69,7 +72,7 @@ export async function updateKnowledgeBaseVisibility(
     },
     body: JSON.stringify({ visibility })
   })
-  await ensureFetchResponseOk(response, '更新知识库状态失败')
+  await ensureFetchResponseOk(response, t('ui.failedToUpdateTheKnowledgeBaseStatus'))
   const json = await response.json()
   return json.data as KnowledgeBaseRecord
 }
@@ -80,7 +83,7 @@ export async function fetchKnowledgeBaseMembers(
   const response = await fetchWithAuth(`/knowledge-bases/${knowledgeBaseId}/members`, {
     method: 'GET'
   })
-  await ensureFetchResponseOk(response, '获取团队成员失败')
+  await ensureFetchResponseOk(response, t('ui.failedToLoadTeamMembers'))
   const json = await response.json()
   return json.data.members as KnowledgeBaseMember[]
 }
@@ -100,7 +103,7 @@ export async function inviteKnowledgeBaseMembers(
     },
     body: JSON.stringify({ userIds })
   })
-  await ensureFetchResponseOk(response, '发送邀请失败')
+  await ensureFetchResponseOk(response, t('ui.failedToSendTheInvitation'))
   const json = await response.json()
   return json.data as {
     createdCount: number
@@ -116,19 +119,19 @@ export async function removeKnowledgeBaseMember(
   const response = await fetchWithAuth(`/knowledge-bases/${knowledgeBaseId}/members/${userId}`, {
     method: 'DELETE'
   })
-  await ensureFetchResponseOk(response, '移除成员失败')
+  await ensureFetchResponseOk(response, t('ui.failedToRemoveTheMember'))
 }
 
 export async function leaveKnowledgeBase(knowledgeBaseId: string): Promise<void> {
   const response = await fetchWithAuth(`/knowledge-bases/${knowledgeBaseId}/leave`, {
     method: 'DELETE'
   })
-  await ensureFetchResponseOk(response, '退出知识库失败')
+  await ensureFetchResponseOk(response, t('ui.failedToLeaveTheKnowledgeBase'))
 }
 
 export async function fetchKnowledgeBaseInvitations(): Promise<KnowledgeBaseInvitation[]> {
   const response = await fetchWithAuth('/knowledge-bases/invitations', { method: 'GET' })
-  await ensureFetchResponseOk(response, '获取知识库邀请失败')
+  await ensureFetchResponseOk(response, t('ui.failedToLoadKnowledgeBaseInvitations'))
   const json = await response.json()
   return json.data.invitations as KnowledgeBaseInvitation[]
 }
@@ -137,19 +140,19 @@ export async function acceptKnowledgeBaseInvitation(invitationId: string): Promi
   const response = await fetchWithAuth(`/knowledge-bases/invitations/${invitationId}/accept`, {
     method: 'POST'
   })
-  await ensureFetchResponseOk(response, '接受邀请失败')
+  await ensureFetchResponseOk(response, t('ui.failedToAcceptTheInvitation'))
 }
 
 export async function rejectKnowledgeBaseInvitation(invitationId: string): Promise<void> {
   const response = await fetchWithAuth(`/knowledge-bases/invitations/${invitationId}/reject`, {
     method: 'POST'
   })
-  await ensureFetchResponseOk(response, '拒绝邀请失败')
+  await ensureFetchResponseOk(response, t('ui.failedToDeclineTheInvitation'))
 }
 
 export async function deleteKnowledgeBase(knowledgeBaseId: string): Promise<void> {
   const response = await fetchWithAuth(`/knowledge-bases/${knowledgeBaseId}`, {
     method: 'DELETE'
   })
-  await ensureFetchResponseOk(response, '删除知识库失败')
+  await ensureFetchResponseOk(response, t('ui.failedToDeleteTheKnowledgeBase'))
 }

@@ -17,10 +17,12 @@
     "antd": "6.5.4",
     "dompurify": "^3.3.3",
     "highlight.js": "^11.11.1",
+    "i18next": "^26.4.4",
     "markdown-it": "^14.1.1",
     "motion": "^13.1.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "react-i18next": "^17.0.16",
     "react-router-dom": "7.18.2",
     "sortablejs": "^1.15.7",
     "zustand": "5.0.14"

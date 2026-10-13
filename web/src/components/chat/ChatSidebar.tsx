@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { App as AntApp, Button, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -103,6 +105,7 @@ function clearConversationDragClasses(item: HTMLElement) {
 }
 
 function ConversationList(props: ConversationListProps) {
+  useTranslation()
   const rootRef = useRef<HTMLDivElement>(null)
   const suppressSelectUntilRef = useRef(0)
   const usesLongPressDragRef = useRef(false)
@@ -272,7 +275,7 @@ function ConversationList(props: ConversationListProps) {
                   type="text"
                   size="small"
                   icon={<IconParkPin />}
-                  aria-label="取消置顶"
+                  aria-label={t('ui.unpin')}
                   onClick={(event) => {
                     event.stopPropagation()
                     props.onTogglePin(conversation.id, false)
@@ -297,6 +300,7 @@ function ConversationList(props: ConversationListProps) {
 }
 
 export default function ChatSidebar(props: Props) {
+  useTranslation()
   const { modal } = AntApp.useApp()
   const [projectsCollapsed, setProjectsCollapsed] = useState(false)
   const [conversationsCollapsed, setConversationsCollapsed] = useState(false)
@@ -355,10 +359,12 @@ export default function ChatSidebar(props: Props) {
 
   function confirmDeleteProject(project: ProjectRecord) {
     modal.confirm({
-      title: '删除项目',
-      content: `删除「${project.title}」会同时删除项目下的所有会话，确认继续吗？`,
-      okText: '删除',
-      cancelText: '取消',
+      title: t('ui.deleteProject'),
+      content: t('ui.deletingValueWillAlsoDeleteAllItsConversationsContinue', {
+        v0: project.title
+      }),
+      okText: t('ui.delete'),
+      cancelText: t('ui.cancel'),
       okButtonProps: { danger: true },
       onOk: () => props.onDeleteProject(project.id)
     })
@@ -366,10 +372,10 @@ export default function ChatSidebar(props: Props) {
 
   function projectMenu(project: ProjectRecord): MenuProps['items'] {
     return [
-      { key: 'new', label: '新建对话' },
-      { key: 'edit', label: '编辑' },
+      { key: 'new', label: t('ui.newChat') },
+      { key: 'edit', label: t('ui.edit') },
       { type: 'divider' },
-      { key: 'delete', label: '删除', danger: true }
+      { key: 'delete', label: t('ui.delete'), danger: true }
     ]
   }
 
@@ -404,13 +410,13 @@ export default function ChatSidebar(props: Props) {
               onClick={() => setProjectsCollapsed((value) => !value)}
             >
               <DownOutlined className={projectsCollapsed ? 'is-collapsed' : ''} />
-              <span>项目</span>
+              <span>{t('ui.projects')}</span>
             </button>
             <Button
               type="text"
               size="small"
               icon={<PlusOutlined />}
-              aria-label="新建项目"
+              aria-label={t('ui.newProject')}
               onClick={props.onCreateProject}
             />
           </header>
@@ -465,7 +471,7 @@ export default function ChatSidebar(props: Props) {
                             type="text"
                             size="small"
                             icon={<MoreOutlined />}
-                            aria-label="更多项目操作"
+                            aria-label={t('ui.moreProjectActions')}
                             onClick={(event) => {
                               event.stopPropagation()
                               setMobileProject(project)
@@ -486,7 +492,7 @@ export default function ChatSidebar(props: Props) {
                               type="text"
                               size="small"
                               icon={<MoreOutlined />}
-                              aria-label="更多项目操作"
+                              aria-label={t('ui.moreProjectActions')}
                               onClick={(event) => event.stopPropagation()}
                             />
                           </Dropdown>
@@ -537,13 +543,13 @@ export default function ChatSidebar(props: Props) {
               onClick={() => setConversationsCollapsed((value) => !value)}
             >
               <DownOutlined className={conversationsCollapsed ? 'is-collapsed' : ''} />
-              <span>对话</span>
+              <span>{t('ui.chats')}</span>
             </button>
             <Button
               type="text"
               size="small"
               icon={<PlusOutlined />}
-              aria-label="新建对话"
+              aria-label={t('ui.newChat')}
               onClick={props.onCreateConversation}
             />
           </header>
@@ -583,7 +589,7 @@ export default function ChatSidebar(props: Props) {
             setMobileProject(null)
           }}
         >
-          新建对话
+          {t('ui.newChat')}
         </MobileActionSheetItem>
         <MobileActionSheetItem
           icon={<EditOutlined />}
@@ -592,7 +598,7 @@ export default function ChatSidebar(props: Props) {
             setMobileProject(null)
           }}
         >
-          编辑
+          {t('ui.edit')}
         </MobileActionSheetItem>
         <MobileActionSheetItem
           danger
@@ -602,7 +608,7 @@ export default function ChatSidebar(props: Props) {
             setMobileProject(null)
           }}
         >
-          删除
+          {t('ui.delete')}
         </MobileActionSheetItem>
       </MobileActionSheet>
     </>

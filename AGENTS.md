@@ -56,6 +56,14 @@
 - `chat-layout-sidebar-content` 使用原生滚动容器并隐藏滚动条；`chat-layout-collapse-header` 采用 sticky 吸顶，背景必须使用不透明实色，避免滚动内容透出
 - 侧栏列表密度要偏紧凑：项目/会话 item 默认约 36px 高，分组和列表 padding 不宜过大；项目内会话左侧要缩进到和项目标题对齐
 
+## 界面国际化
+
+- `web/src/i18n/index.ts` 使用 i18next + react-i18next；语言仅支持 `zh-CN` / `en-US`，默认中文。翻译资源位于 `web/src/i18n/locales/`，使用稳定语义 key 和插值，不拼接句子；React 组件订阅 `useTranslation()`，派生文案缓存需把语言加入依赖。
+- `web/src/components/LanguageSelect.tsx` 是共享语言入口：未登录时在登录/注册页右上角与主题并排，已登录时在共用设置弹窗中展示。Ant Design 的 `ConfigProvider.locale`、HTML lang 和日期格式随语言更新。
+- 未登录语言存 localStorage；已有用户登录和 `/auth/me` 恢复时以 `User.language` 为准。注册和首次访客创建继承登录页语言，已有访客恢复不覆盖账号偏好。`PATCH /api/users/me/language` 保存当前账号偏好，前端即时切换、保存期间防重复、失败回退，并忽略跨账号的迟到结果。
+- 本次语言仅影响界面，不传入 AI 调用；模型配置名称/描述、已有消息、用户内容和项目提示词保留原文。后端错误按 errorCode 在前端翻译，架构图使用原生成数据和独立展示翻译，不手改生成产物。
+- 验证：`node --test scripts/i18n.test.cjs`；需要真实数据库验证时，在本地 server 运行后执行 `node scripts/i18n-api.test.cjs`（临时测试账号在 finally 清理），再执行两端 `yarn build`。
+
 ## 功能模块文件索引
 
 ### 1. 注册 / 登录

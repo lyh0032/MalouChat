@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { t } from '../../i18n'
 import type { ReactNode } from 'react'
 import { Button } from 'antd'
 import {
@@ -16,12 +18,7 @@ import MalouBrand from '../MalouBrand'
 import './AppSidebarShell.css'
 
 export type AppSidebarActiveItem =
-  | 'new-conversation'
-  | 'memories'
-  | 'library-assets'
-  | 'knowledge-bases'
-  | 'admin'
-  | null
+  'new-conversation' | 'memories' | 'library-assets' | 'knowledge-bases' | 'admin' | null
 
 type AppSidebarShellProps = {
   mobile: boolean
@@ -56,6 +53,7 @@ export default function AppSidebarShell({
   onNavigate,
   onSettings
 }: AppSidebarShellProps) {
+  useTranslation()
   function itemClass(item: AppSidebarActiveItem) {
     return activeItem === item ? 'is-active' : undefined
   }
@@ -66,7 +64,7 @@ export default function AppSidebarShell({
         <button
           className="app-sidebar-backdrop"
           type="button"
-          aria-label="关闭侧边菜单"
+          aria-label={t('ui.closeSidebar')}
           onClick={onClose}
         />
       ) : null}
@@ -77,7 +75,7 @@ export default function AppSidebarShell({
             <button
               className="app-sidebar-brand-link"
               type="button"
-              aria-label="返回 MalouChat"
+              aria-label={t('ui.backToMalouchat')}
               onClick={onBrandClick}
             >
               <MalouBrand className="layout-brand-logo" />
@@ -89,13 +87,13 @@ export default function AppSidebarShell({
             <Button
               shape="circle"
               icon={<CloseOutlined />}
-              aria-label="关闭菜单"
+              aria-label={t('ui.closeMenu')}
               onClick={onClose}
             />
           ) : null}
         </header>
 
-        <nav className="chat-sidebar-top" aria-label="主导航">
+        <nav className="chat-sidebar-top" aria-label={t('ui.mainNavigation')}>
           <button
             className={itemClass('new-conversation')}
             type="button"
@@ -103,11 +101,11 @@ export default function AppSidebarShell({
             onClick={onCreateConversation}
           >
             <PlusOutlined />
-            <span>新建对话</span>
+            <span>{t('ui.newChat')}</span>
           </button>
           <button type="button" onClick={onSearch}>
             <SearchOutlined />
-            <span>搜索对话</span>
+            <span>{t('ui.searchChats')}</span>
           </button>
           <button
             className={itemClass('memories')}
@@ -116,7 +114,7 @@ export default function AppSidebarShell({
             onClick={() => onNavigate('/memories')}
           >
             <BookOutlined />
-            <span>管理记忆</span>
+            <span>{t('ui.manageMemories')}</span>
           </button>
           <button
             className={itemClass('library-assets')}
@@ -125,7 +123,7 @@ export default function AppSidebarShell({
             onClick={() => onNavigate('/library-assets')}
           >
             <FolderOutlined />
-            <span>资料库</span>
+            <span>{t('ui.library')}</span>
           </button>
           <button
             className={itemClass('knowledge-bases')}
@@ -134,7 +132,7 @@ export default function AppSidebarShell({
             onClick={() => onNavigate('/knowledge-bases')}
           >
             <DatabaseOutlined />
-            <span>知识库</span>
+            <span>{t('ui.knowledgeBases')}</span>
             {knowledgeBaseCount > 0 ? <b>{knowledgeBaseCount}</b> : null}
           </button>
           {isAdmin ? (
@@ -145,7 +143,7 @@ export default function AppSidebarShell({
               onClick={() => onNavigate('/admin')}
             >
               <ToolOutlined />
-              <span>后台管理</span>
+              <span>{t('ui.administration')}</span>
             </button>
           ) : null}
         </nav>
@@ -159,7 +157,7 @@ export default function AppSidebarShell({
             type="text"
             shape="circle"
             icon={<SettingOutlined />}
-            aria-label="设置"
+            aria-label={t('ui.settings')}
             onClick={onSettings}
           />
         </footer>
