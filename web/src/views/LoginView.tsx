@@ -132,7 +132,7 @@ export default function LoginView() {
     <div className="auth-scene">
       <AnimatedBackground />
       <div className="auth-preferences">
-        <LanguageSelect />
+        <LanguageSelect variant="auth" />
         <AuthThemeToggle />
       </div>
 

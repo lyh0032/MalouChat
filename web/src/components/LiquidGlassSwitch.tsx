@@ -18,6 +18,7 @@ type LiquidGlassSwitchProps<T extends string> = {
   size?: 'sm' | 'md'
   hideLabelsOnMobile?: boolean
   className?: string
+  disabled?: boolean
 }
 
 export default function LiquidGlassSwitch<T extends string>({
@@ -27,7 +28,8 @@ export default function LiquidGlassSwitch<T extends string>({
   ariaLabel = t('ui.switchOptions'),
   size = 'md',
   hideLabelsOnMobile = false,
-  className = ''
+  className = '',
+  disabled = false
 }: LiquidGlassSwitchProps<T>) {
   const selectedIndex = Math.max(
     0,
@@ -44,6 +46,7 @@ export default function LiquidGlassSwitch<T extends string>({
       style={switchStyle}
       role="radiogroup"
       aria-label={ariaLabel}
+      aria-busy={disabled || undefined}
     >
       <span className="liquid-glass-switch__thumb" aria-hidden="true" />
       {options.map((option) => {
@@ -58,6 +61,7 @@ export default function LiquidGlassSwitch<T extends string>({
             role="radio"
             aria-checked={active}
             aria-label={option.ariaLabel ?? option.label}
+            disabled={disabled}
             onClick={() => active || onChange(option.value)}
           >
             {Icon ? <Icon /> : null}

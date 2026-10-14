@@ -124,6 +124,16 @@
   transform: scale(0.98);
 }
 
+.liquid-glass-switch__item:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.liquid-glass-switch__item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 html[data-theme='dark'] .liquid-glass-switch {
   border-color: rgba(255, 255, 255, 0.12);
   background:
