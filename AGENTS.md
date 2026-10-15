@@ -60,8 +60,11 @@
 
 - `web/src/i18n/index.ts` 使用 i18next + react-i18next；语言仅支持 `zh-CN` / `en-US`，默认中文。翻译资源位于 `web/src/i18n/locales/`，使用稳定语义 key 和插值，不拼接句子；React 组件订阅 `useTranslation()`，派生文案缓存需把语言加入依赖。
 - `web/src/components/LanguageSelect.tsx` 是共享语言入口：未登录时在登录/注册页右上角与主题并排，已登录时在共用设置弹窗中展示。Ant Design 的 `ConfigProvider.locale`、HTML lang 和日期格式随语言更新。
+- 语言入口显示“中文 / English”，使用分段切换而非下拉框。登录/注册页传入 `variant="auth"`，直接复用主题入口使用的 `LiquidGlassSwitch`（`size="sm"`），保持高度、圆角、玻璃背景、选中滑块和动画一致；设置弹窗使用默认 `variant="settings"`，复用 Ant Design `Segmented`，与弹窗内主题切换统一。不得另做一套语言切换外观；保存期间禁用切换，`LiquidGlassSwitch` 同时保留键盘焦点样式与可访问名称。
 - 未登录语言存 localStorage；已有用户登录和 `/auth/me` 恢复时以 `User.language` 为准。注册和首次访客创建继承登录页语言，已有访客恢复不覆盖账号偏好。`PATCH /api/users/me/language` 保存当前账号偏好，前端即时切换、保存期间防重复、失败回退，并忽略跨账号的迟到结果。
+- 本地语言缓存 key 为 `malou-ui-language`；语言偏好切换统一通过 `web/src/stores/auth.ts` 的 `setLanguage` 处理。`server/prisma/schema.prisma` 的 `User.language` 默认 `zh-CN`，迁移 `server/prisma/migrations/20261013000000_add_user_language/migration.sql` 添加字段及中英文取值约束；请求取值由 `server/src/modules/users/user.language.ts` 校验，认证响应携带语言字段，前端用户类型与认证恢复链路需同步维护。
 - 本次语言仅影响界面，不传入 AI 调用；模型配置名称/描述、已有消息、用户内容和项目提示词保留原文。后端错误按 errorCode 在前端翻译；技术架构页始终保持中文，直接读取 AGENTS.md 生成的原文，不使用翻译字典或展示翻译层、不手改生成产物；其导航入口仍跟随界面语言。
+- 本轮覆盖登录/注册、共用侧栏和设置、对话及项目操作、记忆管理、资料库、知识库和后台管理的界面文案，以及日期展示、操作提示和 Markdown 复制按钮。`web/src/i18n/errors.ts` 按错误码本地化错误；`source-keys.json` 用于已有静态推荐目录和状态文案的语义 key 映射，不用于翻译用户内容或 AI 输出。新增界面文案需同时维护 `zh-CN.json` 和 `en-US.json`，避免切换后残留旧语言。
 - 验证：`node --test scripts/i18n.test.cjs`；需要真实数据库验证时，在本地 server 运行后执行 `node scripts/i18n-api.test.cjs`（临时测试账号在 finally 清理），再执行两端 `yarn build`。
 
 ## 功能模块文件索引
